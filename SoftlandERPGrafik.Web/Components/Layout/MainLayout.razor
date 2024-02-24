@@ -1,0 +1,59 @@
+﻿@inherits LayoutComponentBase
+@inject IJSRuntime JS
+
+<MudThemeProvider @bind-IsDarkMode="@darkModeActive" Theme="_theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="0">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudSpacer />
+        @if (this.darkModeActive)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.LightMode" OnClick="@((e) => ToggleDarkMode())" Title="To light mode" />
+        }
+        else
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.DarkMode" OnClick="@((e) => ToggleDarkMode())" Title="To dark mode" />
+        }
+        <MudButton Style="background-color: transparent; border: none; padding: 0;" Href="http://erp.softland20.pl/">
+            <img src="\favicon.ico" alt="Favicon" style="width: 32px; height: 32px;">
+        </MudButton>
+        <LoginDisplay />
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="1">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">SoftlandERP.Web</MudText>
+        </MudDrawerHeader>
+        <NavMenu />
+    </MudDrawer>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="my-16 pt-16">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = false;
+    private MudTheme _theme = new();
+    private bool darkModeActive = false;
+
+    void ToggleDarkMode()
+    {
+        this.darkModeActive = !this.darkModeActive;
+        // if (darkModeActive == true)
+        // {
+        //     JS.InvokeAsync<object>("setTheme", "fluent-dark");
+        // }
+        // else
+        // {
+        //     JS.InvokeAsync<object>("setTheme", "fluent");
+        // }
+    }
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}

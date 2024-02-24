@@ -1,0 +1,25 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using SoftlandERPGrafik.Core.Repositories.Interfaces;
+@using SoftlandERPGrafik.Data.Entities.Staff.AD;
+@using System.DirectoryServices.AccountManagement;
+@using SoftlandERPGrafik.Web.Components.Services
+@inject UserDetailsService UserDetailsService
+@inject IADRepository ADRepository
+
+<AuthorizeView>
+    <div class="profile-info">
+        <span class="name">@userDetails.DisplayName</span><br />
+        <span class="role">@userDetails.JobTitle</span>
+    </div>
+ </AuthorizeView>
+
+@code {
+
+    private UserDetails userDetails;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userDetails = await UserDetailsService.GetUserDetailsAsync();
+        var aduser = ADRepository.GetAllADUsers();
+    }
+}
