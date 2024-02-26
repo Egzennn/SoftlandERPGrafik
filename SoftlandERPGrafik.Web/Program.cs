@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using Microsoft.AspNetCore.Server.IISIntegration;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
-using NuGet.Protocol.Core.Types;
 using Serilog;
+using SoftlandERGrafik.Data.Entities.Forms;
 using SoftlandERPGrafik.Core.Repositories;
 using SoftlandERPGrafik.Core.Repositories.Interfaces;
 using SoftlandERPGrafik.Data.Configurations;
@@ -12,6 +12,7 @@ using SoftlandERPGrafik.Data.Entities.Staff.AD;
 using SoftlandERPGrafik.Data.Entities.Views;
 using SoftlandERPGrafik.Data.Entities.Vocabularies.Forms.Ogolne;
 using SoftlandERPGrafik.Web.Components;
+using SoftlandERPGrafik.Web.Components.Adaptor;
 using SoftlandERPGrafik.Web.Components.Services;
 using Syncfusion.Blazor;
 
@@ -31,9 +32,11 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddSyncfusionBlazor();
 
 builder.Services.AddScoped<UserDetailsService>();
+builder.Services.AddScoped<GrafikService>();
+builder.Services.AddScoped<GrafikAdaptor>();
 
-builder.Services.AddTransient<IADRepository, ADRepository>();
 builder.Services.AddTransient<IRepository<OgolneStan>, Repository<OgolneStan>>();
+builder.Services.AddTransient<IRepository<GrafikForm>, Repository<GrafikForm>>();
 builder.Services.AddTransient<IADRepository, ADRepository>();
 
 builder.Services.AddMudServices();

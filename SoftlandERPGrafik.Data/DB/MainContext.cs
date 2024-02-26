@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SoftlandERGrafik.Data.Entities.Forms;
 using SoftlandERPGrafik.Data.Entities.Views;
+using SoftlandERPGrafik.Data.Entities.Vocabularies.Forms.Ogolne;
 
 namespace SoftlandERPGrafik.Data.DB
 {
@@ -9,6 +11,10 @@ namespace SoftlandERPGrafik.Data.DB
             : base(options)
         {
         }
+
+        public DbSet<GrafikForm> GrafikForms { get; set; }
+
+        public DbSet<OgolneStan> OgolneStanVocabulary { get; set; }
 
         public DbSet<OrganizacjaLokalizacje> OrganizacjaLokalizacjeVocabulary { get; set; }
 

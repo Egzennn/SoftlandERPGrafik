@@ -50,4 +50,7 @@
     <ProjectReference Include="..\SoftlandERPGrafik.Core\SoftlandERPGrafik.Core.csproj" />
     <ProjectReference Include="..\SoftlandERPGrafik.Data\SoftlandERPGrafik.Data.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Logs\" />
+  </ItemGroup>
 </Project>
