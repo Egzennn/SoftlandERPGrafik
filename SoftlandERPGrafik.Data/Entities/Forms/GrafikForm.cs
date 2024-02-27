@@ -29,5 +29,47 @@ namespace SoftlandERGrafik.Data.Entities.Forms
 
         [NotMapped]
         public bool IsReadonly { get; set; }
+
+        [NotMapped]
+        public string Color
+        {
+            get
+            {
+                if (!this.colorHasBeenSet)
+                {
+                    this.color = this.Description == null ? "#69DC68" : "#FFE376";
+                    this.colorHasBeenSet = true;
+                }
+
+                return this.color;
+            }
+
+            set
+            {
+                this.color = value;
+            }
+        }
+
+        [NotMapped]
+        public string Style
+        {
+            get
+            {
+                this.style = this.Stan == "Plan" ? "repeating-linear-gradient(-45deg, rgba(74, 142, 214, 0.12), rgba(74, 142, 214, 0.12) 10px, rgba(249, 250, 252, 0.3) 10px, rgba(249, 250, 252, 0.3) 20px);" : "";
+                return this.style;
+            }
+
+            set
+            {
+                this.style = value;
+            }
+        }
+
+        [NotMapped]
+        private bool colorHasBeenSet = false;
+        [NotMapped]
+        private string color;
+        [NotMapped]
+        private string style;
     }
 }

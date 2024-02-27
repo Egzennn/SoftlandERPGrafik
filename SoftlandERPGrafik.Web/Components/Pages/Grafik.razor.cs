@@ -38,8 +38,6 @@ namespace SoftlandERPGrafik.Web.Components.Pages
         bool isCreated;
         private Timezone TimezoneData { get; set; } = new Timezone();
         private IEnumerable<ZatrudnieniZrodlo> Acronyms = new List<ZatrudnieniZrodlo>();
-        private IEnumerable<GrafikForm> Events;
-        //private static IEnumerable<GrafikForm> Events;
         private static IEnumerable<OsobaData> Osoby;
         private static IEnumerable<ZatrudnieniDzialy> Dzialy;
         private IEnumerable<Kierownicy> Kierownik;
@@ -91,7 +89,6 @@ namespace SoftlandERPGrafik.Web.Components.Pages
             //this.aduser = this.ADRepository.GetAllADUsers();
             Osoby = await this.GrafikService.GetEmployeesAsync();
             Dzialy = await this.GrafikService.GetDzialyAsync();
-            this.Events = await this.GrafikService.Get();
             this.TimezoneData = new Timezone().GetSystemTimeZone();
             this.LocalizationData = await this.GrafikService.GetLocalizationAsync();
             this.userDetails = await this.UserDetailsService.GetUserAllDetailsAsync();
@@ -157,73 +154,14 @@ namespace SoftlandERPGrafik.Web.Components.Pages
         }
 
         // Style
-        private string GetHeaderStyles(GrafikForm data)
-        {
-            return "background:" + GetSubjectStyle(data.Id) + "background-image:" + GetSubjectStyleAccept(data.Id) + "; color: #253353;";
-        }
-
-        private string GetEventStyle(Guid locationId)
-        {
-            var eventData = this.Events.Where(item => item.Id.Equals(locationId)).FirstOrDefault();
-
-            if (eventData != null)
-            {
-                Dictionary<string, object> attributes = new Dictionary<string, object>();
-
-                string backgroundColor = string.IsNullOrEmpty(eventData.Description) ? "#69DC68" : "#FFE376";
-                return backgroundColor;
-            }
-
-            return "#FFFFFF";
-        }
-
-        private string GetSubjectStyle(Guid? Id)
-        {
-            var eventData = this.Events.Where(item => item.Id.Equals(Id)).FirstOrDefault();
-            if (eventData != null)
-            {
-                Dictionary<string, object> attributes = new Dictionary<string, object>();
-                string backgroundColor = string.IsNullOrEmpty(eventData.Description) ? "#69DC68" : "#FFE376";
-                string backgroundColorBorder = CalculateBorderColor(backgroundColor);
-                return backgroundColor + ";" + backgroundColorBorder + ";"; // Combine backgroundColor and backgroundColorBorder
-            }
-
-            return null;
-        }
-
-        private string GetSubjectStyleAccept(Guid? Id)
-        {
-            var eventData = this.Events.Where(item => item.Id.Equals(Id)).FirstOrDefault();
-            if (eventData != null)
-            {
-                Dictionary<string, object> attributes = new Dictionary<string, object>();
-                string backgroundImage = string.Equals(eventData.Stan, "Plan") ? "repeating-linear-gradient(-45deg, rgba(74, 142, 214, 0.12), rgba(74, 142, 214, 0.12) 10px, rgba(249, 250, 252, 0.3) 10px, rgba(249, 250, 252, 0.3) 20px);" : "";
-                return backgroundImage; // Combine backgroundColor and backgroundColorBorder
-            }
-
-            return null;
-        }
-
-        private string CalculateBorderColor(string color)
-        {
-            int r = int.Parse(color.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
-            int g = int.Parse(color.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
-            int b = int.Parse(color.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
-
-            r = (int)(r * 0.3);
-            g = (int)(g * 0.3);
-            b = (int)(b * 0.3);
-
-            return $"#{r:X2}{g:X2}{b:X2}";
-        }
 
         public async Task OnEventRendered(EventRenderedArgs<GrafikForm> args)
         {
             Dictionary<string, object> attributes = new Dictionary<string, object>();
 
-            string backgroundColor = string.IsNullOrEmpty(args.Data.Description) ? "#69DC68" : "#FFE376";
+            string backgroundColor = args.Data.Color;
             string borderColor = "border-color: rgba(42, 65, 111, 0.2)";
-            string backgroundImage = string.Equals(args.Data.Stan, "Plan") ? "repeating-linear-gradient(-45deg, rgba(74, 142, 214, 0.12), rgba(74, 142, 214, 0.12) 10px, rgba(249, 250, 252, 0.3) 10px, rgba(249, 250, 252, 0.3) 20px);" : "";
+            string backgroundImage = args.Data.Style;
 
             attributes.Add("style", $"background:{backgroundColor}; border-color:{borderColor}; background-image:{backgroundImage}");
             args.Attributes = attributes;

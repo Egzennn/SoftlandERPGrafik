@@ -43,9 +43,9 @@
             return await this.grafikRepository.GetAllAsync();
         }
 
-        public async Task<IEnumerable<GrafikForm>> Get()
+        public async Task<IEnumerable<GrafikForm>> Get(DateTime StartDate, DateTime EndDate)
         {
-            IEnumerable<GrafikForm> grafikForms = await this.grafikRepository.GetAllAsync();
+            IEnumerable<GrafikForm> grafikForms = mainContext.GrafikForms.Where(e => e.StartTime >= StartDate && e.EndTime <= EndDate);
 
             DateTime selectedDate = DateTime.UtcNow.ToLocalTime();
 
@@ -70,6 +70,8 @@
                     Stan = grafikForm.Stan,
                     Status = grafikForm.Status,
                     CreatedBy = grafikForm.CreatedBy,
+                    Color = grafikForm.Color,
+                    Style = grafikForm.Style,
                 });
             }
 

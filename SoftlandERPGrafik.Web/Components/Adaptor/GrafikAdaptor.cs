@@ -14,13 +14,14 @@ namespace SoftlandERPGrafik.Web.Components.Adaptor
             this.appService = appService;
         }
 
-        IEnumerable<GrafikForm>? EventData;
-
         //Performs Read operation
         public override async Task<object> ReadAsync(DataManagerRequest dataManagerRequest, string key = null)
         {
-            this.EventData = await this.appService.Get();
-            return dataManagerRequest.RequiresCounts ? new DataResult() { Result = EventData, Count = EventData.Count() } : EventData;
+            System.Collections.Generic.IDictionary<string, object> Params = dataManagerRequest.Params;
+            DateTime start = DateTime.Parse((string)Params["StartDate"]);
+            DateTime end = DateTime.Parse((string)Params["EndDate"]);
+            var EventData = await this.appService.Get(start, end);
+            return dataManagerRequest.RequiresCounts ? new DataResult() : EventData;
         }
 
         //Performs Insert operation
