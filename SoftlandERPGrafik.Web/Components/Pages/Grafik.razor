@@ -2,7 +2,6 @@
 @inject Microsoft.AspNetCore.Components.NavigationManager UriHelper
 @inject GrafikService GrafikService
 @inject IRepository<OgolneStan> StanVocabulary
-@inject IRepository<GrafikForm> GrafikForm
 @inject IRepository<Kierownicy> Kierownicy
 @inject IADRepository ADRepository
 @inject ISnackbar Snackbar
@@ -122,11 +121,12 @@
                     </ScheduleResources>
                     <ScheduleTimeScale Enable="@EnableTimeScale" Interval="@SlotInterval" SlotCount="@SlotCount"></ScheduleTimeScale>
                     <ScheduleEvents TValue="GrafikForm" EventRendered="OnEventRendered"></ScheduleEvents>
-                    <ScheduleEventSettings TValue="GrafikForm">
+                    <ScheduleEventSettings TValue="GrafikForm" EnableTooltip="@TooltipEnable" Query="@LocalizationQuery">
                         <ChildContent>
-                            <SfDataManager AdaptorInstance="@typeof(GrafikAdaptor)" Adaptor="Adaptors.CustomAdaptor">
+                            <SfDataManager Json="@Events" Adaptor="Adaptors.JsonAdaptor"></SfDataManager>
+@*                             <SfDataManager AdaptorInstance="@typeof(GrafikAdaptor)" Adaptor="Adaptors.CustomAdaptor">
                             </SfDataManager>
-                        </ChildContent>
+ *@                        </ChildContent>
                         <TooltipTemplate>
                             @{
                                 GrafikForm webinarData = (context as GrafikForm);
@@ -193,7 +193,7 @@
                         <ContentTemplate>
                             @{
                                 GrafikForm Data = (context as GrafikForm);
-                                if (Data.CreatedBy == null || Data.Id == Guid.Empty)
+                                if (Data.CreatedBy == null)
                                 {
                                     if (isCreated)
                                     {
@@ -209,10 +209,12 @@
                                                 <div class="e-date-time-details e-text-ellipsis">@(GetEventDetails((context as GrafikForm)))</div>
                                             </div>
                                         </div>
-                                        <div class="e-description">
-                                            <div class="e-description-icon e-icons"></div>
-                                            <div class="e-description-details e-text-ellipsis">@(Data.Description)</div>
-                                        </div>
+                                        @if(Data.Description != null){
+                                            <div class="e-description">
+                                                <div class="e-description-icon e-icons"></div>
+                                                <div class="e-description-details e-text-ellipsis">@(Data.Description)</div>
+                                            </div>
+                                        }
                                         <div class="e-location">
                                             <div class="e-location-icon e-icons"></div>
                                             <div class="e-location-details e-text-ellipsis">@((Data.LocationId != 0) ? LocalizationData.FirstOrDefault(item => item.Lok_LokId.Equals(Data.LocationId))?.Wartosc : "")</div>
@@ -221,7 +223,7 @@
                                 }
                             }
                         </ContentTemplate>
-@*                         <FooterTemplate>
+                        <FooterTemplate>
                             @{
                                 var isReadOnly = (context as GrafikForm)?.IsReadonly ?? false;
                                 var isAddMode = ((context as GrafikForm)?.Id == null || (context as GrafikForm)?.Id == Guid.Empty);
@@ -266,7 +268,7 @@
                                 }
                             </div>
                         </FooterTemplate>
- *@                    </ScheduleQuickInfoTemplates>
+                    </ScheduleQuickInfoTemplates>
                     <ScheduleTemplates>
                         <ResourceHeaderTemplate>
                             @{
@@ -278,11 +280,11 @@
                                     <div style="margin-left: 25px;">
                                         <div class="e-text-ellipsis e-resource-text">@(resourceData.Imie_Nazwisko)</div>
                                         @{
-                                            var adUserInfo = GetADUserInfo(resourceData.PRI_Opis);
-                                            if (adUserInfo != null)
-                                            {
-                                                <div class="e-text-ellipsis e-resource-text">@adUserInfo.ToString()</div>
-                                            }
+                                            // var adUserInfo = GetADUserInfo(resourceData.PRI_Opis);
+                                            // if (adUserInfo != null)
+                                            // {
+                                            //     <div class="e-text-ellipsis e-resource-text">@adUserInfo.ToString()</div>
+                                            // }
                                         }
                                     </div>
                                 }
@@ -467,7 +469,7 @@
                     <MenuItems>
                         <MenuItem Text="Nowe wydarzenie" IconCss="e-icons e-plus" Id="Add" Hidden="@isCell" Disabled="@disableState"></MenuItem>
                         <MenuItem Text="Nowe powtarzające sie wydarzenie" IconCss="e-icons e-repeat" Hidden="@isCell" Id="AddRecurrence" Disabled="@disableState"></MenuItem>
-                        <MenuItem Text="Dzisiaj" IconCss="e-icons e-timeline-today" Id="Today" Hidden="@isCell" Disabled="@disableState"></MenuItem>
+                        <MenuItem Text="Dzisiaj" IconCss="e-icons e-timeline-today" Id="Today" Hidden="@isCell"></MenuItem>
                         <MenuItem Text="Edytuj wydarzenie" IconCss="e-icons e-edit" Id="Save" Hidden="@isEvent" Disabled="@disableState"></MenuItem>
                         <MenuItem Text="Edytuj wydarzenie" IconCss="e-icons e-edit" Id="EditRecurrenceEvent" Hidden="@isRecurrence" Disabled="@disableState">
                             <MenuItems>
@@ -512,45 +514,12 @@
                      </SfMultiSelect>
                  </div>
                  <div class="col-row">
-                     <SfTextBox ID="events-search" Placeholder='Enter the Search text' @bind-Value="@SearchValue" OnChange="@OnEventSearch"></SfTextBox>
+                     <SfTextBox ID="events-search" Placeholder='Wprowadz opis' @bind-Value="@SearchValue" OnChange="@OnEventSearch"></SfTextBox>
                  </div>
              </div>
          </div>
      </div>
  </div>
-
-
-
- @code {
-
-    public List<GrafikForm> GetEvents(IEnumerable<GrafikForm> grafikForms, IEnumerable<OsobaData> osobyList, DateTime selectedDate)
-    {
-        List<GrafikForm> eventData = new List<GrafikForm>();
-
-        foreach (var grafikForm in grafikForms)
-        {
-            eventData.Add(new GrafikForm
-                {
-                    Id = grafikForm.Id,
-                    StartTime = grafikForm.StartTime,
-                    EndTime = grafikForm.EndTime,
-                    LocationId = grafikForm.LocationId,
-                    Description = grafikForm.Description,
-                    IsAllDay = grafikForm.IsAllDay,
-                    PRI_PraId = grafikForm.PRI_PraId,
-                    DZL_DzlId = grafikForm.DZL_DzlId,
-                    RecurrenceID = grafikForm.RecurrenceID,
-                    RecurrenceRule = grafikForm.RecurrenceRule,
-                    RecurrenceException = grafikForm.RecurrenceException,
-                    //IsReadonly = grafikForm.StartTime < selectedDate && grafikForm.EndTime < selectedDate,
-                    Stan = grafikForm.Stan,
-                    Status = grafikForm.Status,
-                });
-        }
-
-        return eventData;
-    }
-}
 
 <style>
 .e-schedule .e-read-only {

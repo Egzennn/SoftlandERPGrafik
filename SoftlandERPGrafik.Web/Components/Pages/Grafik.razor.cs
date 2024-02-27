@@ -38,7 +38,8 @@ namespace SoftlandERPGrafik.Web.Components.Pages
         bool isCreated;
         private Timezone TimezoneData { get; set; } = new Timezone();
         private IEnumerable<ZatrudnieniZrodlo> Acronyms = new List<ZatrudnieniZrodlo>();
-        private static IEnumerable<GrafikForm> Events;
+        private IEnumerable<GrafikForm> Events;
+        //private static IEnumerable<GrafikForm> Events;
         private static IEnumerable<OsobaData> Osoby;
         private static IEnumerable<ZatrudnieniDzialy> Dzialy;
         private IEnumerable<Kierownicy> Kierownik;
@@ -87,12 +88,11 @@ namespace SoftlandERPGrafik.Web.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            this.aduser = this.ADRepository.GetAllADUsers();
+            //this.aduser = this.ADRepository.GetAllADUsers();
             Osoby = await this.GrafikService.GetEmployeesAsync();
-            Events = await this.GrafikForm.GetAllAsync();
             Dzialy = await this.GrafikService.GetDzialyAsync();
+            this.Events = await this.GrafikService.Get();
             this.TimezoneData = new Timezone().GetSystemTimeZone();
-            this.DataSource = GetEvents(Events, Osoby, this.SelectedDate);
             this.LocalizationData = await this.GrafikService.GetLocalizationAsync();
             this.userDetails = await this.UserDetailsService.GetUserAllDetailsAsync();
             this.Kierownik = await Kierownicy.GetAllAsync();
@@ -100,27 +100,27 @@ namespace SoftlandERPGrafik.Web.Components.Pages
             //this.ogolneStany = allStates.Where(s => (s as OgolneStan)?.Stan == "Aktywny").OrderBy(s => (s as OgolneStan)?.Wartosc).Select(s => (s as OgolneStan)?.Wartosc).ToList();
         }
 
-        private string? GetADUserInfo(string PRI_Opis)
-        {
-            if (string.IsNullOrEmpty(PRI_Opis))
-            {
-                return null;
-            }
-            else
-            {
-                var matchingUser = this.aduser.FirstOrDefault(user => user.Login == PRI_Opis);
+        //private string? GetADUserInfo(string PRI_Opis)
+        //{
+        //    if (string.IsNullOrEmpty(PRI_Opis))
+        //    {
+        //        return null;
+        //    }
+        //    else
+        //    {
+        //        var matchingUser = this.aduser.FirstOrDefault(user => user.Login == PRI_Opis);
 
-                if (matchingUser != null)
-                {
-                    string JobTitle = matchingUser.JobTitle;
-                    return JobTitle;
-                }
-                else
-                {
-                    return "Pracownik";
-                }
-            }
-        }
+        //        if (matchingUser != null)
+        //        {
+        //            string JobTitle = matchingUser.JobTitle;
+        //            return JobTitle;
+        //        }
+        //        else
+        //        {
+        //            return "Pracownik";
+        //        }
+        //    }
+        //}
 
         private bool IsCurrentUserAuthorized(int? priPraId)
         {
@@ -164,7 +164,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
 
         private string GetEventStyle(Guid locationId)
         {
-            var eventData = this.DataSource.Where(item => item.Id.Equals(locationId)).FirstOrDefault();
+            var eventData = this.Events.Where(item => item.Id.Equals(locationId)).FirstOrDefault();
 
             if (eventData != null)
             {
@@ -179,7 +179,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
 
         private string GetSubjectStyle(Guid? Id)
         {
-            var eventData = this.DataSource.Where(item => item.Id.Equals(Id)).FirstOrDefault();
+            var eventData = this.Events.Where(item => item.Id.Equals(Id)).FirstOrDefault();
             if (eventData != null)
             {
                 Dictionary<string, object> attributes = new Dictionary<string, object>();
@@ -193,7 +193,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
 
         private string GetSubjectStyleAccept(Guid? Id)
         {
-            var eventData = this.DataSource.Where(item => item.Id.Equals(Id)).FirstOrDefault();
+            var eventData = this.Events.Where(item => item.Id.Equals(Id)).FirstOrDefault();
             if (eventData != null)
             {
                 Dictionary<string, object> attributes = new Dictionary<string, object>();
@@ -383,35 +383,35 @@ namespace SoftlandERPGrafik.Web.Components.Pages
             await this.ScheduleRef.OpenEditorAsync(eventData, CurrentAction.Add);
         }
 
-        //private async void OnMoreDetailsClick(MouseEventArgs args, GrafikForm data, bool isEventData)
-        //{
-        //    await ScheduleRef.CloseQuickInfoPopupAsync();
-        //    GrafikForm eventData = new GrafikForm
-        //    {
-        //        Id = data.Id,
-        //        StartTime = data.StartTime,
-        //        EndTime = data.EndTime,
-        //        LocationId = data.LocationId,
-        //        Description = data.Description,
-        //        IsAllDay = data.IsAllDay,
-        //        PRI_PraId = data.PRI_PraId,
-        //        DZL_DzlId = data.DZL_DzlId,
-        //        RecurrenceException = data.RecurrenceException,
-        //        RecurrenceID = data.RecurrenceID,
-        //        RecurrenceRule = data.RecurrenceRule,
-        //        Stan = data.Stan,
-        //        Status = data.Status
-        //    };
+        private async void OnMoreDetailsClick(MouseEventArgs args, GrafikForm data, bool isEventData)
+        {
+            await ScheduleRef.CloseQuickInfoPopupAsync();
+            GrafikForm eventData = new GrafikForm
+            {
+                Id = data.Id,
+                StartTime = data.StartTime,
+                EndTime = data.EndTime,
+                LocationId = data.LocationId,
+                Description = data.Description,
+                IsAllDay = data.IsAllDay,
+                PRI_PraId = data.PRI_PraId,
+                DZL_DzlId = data.DZL_DzlId,
+                RecurrenceException = data.RecurrenceException,
+                RecurrenceID = data.RecurrenceID,
+                RecurrenceRule = data.RecurrenceRule,
+                Stan = data.Stan,
+                Status = data.Status
+            };
 
-        //    if (isEventData == false)
-        //    {
-        //        await ScheduleRef.OpenEditorAsync(eventData, CurrentAction.Add);
-        //    }
-        //    else
-        //    {
-        //        await ScheduleRef.OpenEditorAsync(eventData, !string.IsNullOrEmpty(eventData.RecurrenceRule) ? CurrentAction.EditOccurrence : CurrentAction.Save);
-        //    }
-        //}
+            if (isEventData == false)
+            {
+                await ScheduleRef.OpenEditorAsync(eventData, CurrentAction.Add);
+            }
+            else
+            {
+                await ScheduleRef.OpenEditorAsync(eventData, !string.IsNullOrEmpty(eventData.RecurrenceRule) ? CurrentAction.EditOccurrence : CurrentAction.Save);
+            }
+        }
 
         private async Task OnDelete(GrafikForm data)
         {
@@ -446,6 +446,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
 
             IsDzialyExpanded = !IsDzialyExpanded; // Odwracamy stan
         }
+
         private async Task PopupClose()
         {
             await ScheduleRef.CloseQuickInfoPopupAsync();
@@ -460,6 +461,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
         {
             return data.StartTime.ToString("dd MMMM yyyy", CultureInfo.CurrentCulture) + " (" + data.StartTime.ToString(TimeFormat, CultureInfo.CurrentCulture) + " - " + data.EndTime.ToString(TimeFormat, CultureInfo.CurrentCulture) + ")";
         }
+
         private async Task SetFocus()
         {
             if (isQuickInfoCreated)
@@ -468,12 +470,14 @@ namespace SoftlandERPGrafik.Web.Components.Pages
                 await SubjectRef.FocusAsync();
             }
         }
+
         private async Task OnQuickInfoSubjectCreated()
         {
             await Task.Yield();
             await SubjectRef.FocusAsync();
             isQuickInfoCreated = true;
         }
+
         public void OnToolbarCreated()
         {
             Timer timer = new Timer(1000);
@@ -487,18 +491,22 @@ namespace SoftlandERPGrafik.Web.Components.Pages
             });
             timer.Enabled = true;
         }
+
         private DateTime TimeConvertor(string TimeZoneId)
         {
             return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId));
         }
+
         public void OnTimeScaleChange(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool> args)
         {
             this.EnableTimeScale = args.Checked;
         }
+
         public void OnRowAutoHeightChange(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool> args)
         {
             this.isRowAutoHeight = args.Checked;
         }
+
         public async Task OnFileUploadChange(UploadChangeEventArgs args)
         {
             foreach (Syncfusion.Blazor.Inputs.UploadFiles file in args.Files)
@@ -508,10 +516,12 @@ namespace SoftlandERPGrafik.Web.Components.Pages
                 await ScheduleRef.ImportICalendarAsync(fileContent);
             }
         }
+
         public async void OnPrintClick()
         {
             await ScheduleRef.PrintAsync();
         }
+
         public async void OnExportClick(Syncfusion.Blazor.SplitButtons.MenuEventArgs args)
         {
             if (args.Item.Text == "Excel")
@@ -528,6 +538,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
 
                     ExportDatas.AddRange(datas);
                 }
+
                 ExportOptions Options = new ExportOptions()
                 {
                     ExportType = ExcelFormat.Xlsx,
@@ -543,6 +554,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
                 await ScheduleRef.ExportToICalendarAsync();
             }
         }
+
         public async Task OnOpen(BeforeOpenCloseMenuEventArgs<MenuItem> args)
         {
             if (args.ParentItem == null)
@@ -556,6 +568,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
                     {
                         args.Cancel = true;
                     }
+
                     if (EventData.RecurrenceRule != null)
                     {
                         isCell = isEvent = true;
@@ -574,6 +587,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
                 }
             }
         }
+
         public async Task OnItemSelected(MenuEventArgs<MenuItem> args)
         {
             var SelectedMenuItem = args.Item.Id;
@@ -582,6 +596,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
             {
                 ActiveCellsData = CellData;
             }
+
             switch (SelectedMenuItem)
             {
                 case "Today":
@@ -598,7 +613,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
                     {
                         Id = await this.ScheduleRef.GetMaxEventIdAsync<Guid>(),
                         StartTime = ActiveCellsData.StartTime,
-                        EndTime = ActiveCellsData.EndTime,
+                        EndTime = ActiveCellsData.StartTime.AddHours(1),
                         IsAllDay = false,
                         PRI_PraId = resourceDetails.GroupData.PRI_PraId,
                         DZL_DzlId = resourceDetails.GroupData.DZL_DzlId,
@@ -628,6 +643,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
                     break;
             }
         }
+
         private async void OnSettingsClick()
         {
             this.IsSettingsVisible = !this.IsSettingsVisible;

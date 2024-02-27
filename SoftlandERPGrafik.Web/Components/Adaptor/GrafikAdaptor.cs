@@ -7,11 +7,11 @@ namespace SoftlandERPGrafik.Web.Components.Adaptor
 {
     public class GrafikAdaptor : DataAdaptor
     {
-        private readonly GrafikService _appService;
+        private readonly GrafikService appService;
 
         public GrafikAdaptor(GrafikService appService)
         {
-            _appService = appService;
+            this.appService = appService;
         }
 
         IEnumerable<GrafikForm>? EventData;
@@ -19,24 +19,21 @@ namespace SoftlandERPGrafik.Web.Components.Adaptor
         //Performs Read operation
         public override async Task<object> ReadAsync(DataManagerRequest dataManagerRequest, string key = null)
         {
-            IDictionary<string, object> Params = dataManagerRequest.Params;
-            DateTime start = DateTime.Parse((string)Params["StartDate"]);
-            DateTime end = DateTime.Parse((string)Params["EndDate"]);
-            EventData = await _appService.Get();
+            this.EventData = await this.appService.Get();
             return dataManagerRequest.RequiresCounts ? new DataResult() { Result = EventData, Count = EventData.Count() } : EventData;
         }
 
         //Performs Insert operation
         public async override Task<object> InsertAsync(DataManager dataManager, object data, string key)
         {
-            await _appService.Insert(data as GrafikForm);
+            await this.appService.Insert(data as GrafikForm);
             return data;
         }
 
         //Performs Update operation
         public async override Task<object> UpdateAsync(DataManager dataManager, object data, string keyField, string key)
         {
-            await _appService.Update(data as GrafikForm);
+            await this.appService.Update(data as GrafikForm);
             return data;
         }
 
@@ -44,7 +41,7 @@ namespace SoftlandERPGrafik.Web.Components.Adaptor
         public async override Task<object> RemoveAsync(DataManager dataManager, object data, string keyField, string key)
         {
             Guid id = (Guid)data;
-            await _appService.Delete(id);
+            await this.appService.Delete(id);
             return data;
         }
 
@@ -57,24 +54,26 @@ namespace SoftlandERPGrafik.Web.Components.Adaptor
             {
                 foreach (var data in deleteData)
                 {
-                    await _appService.Delete(data.Id);
+                    await this.appService.Delete(data.Id);
                 }
             }
+
             List<GrafikForm>? addData = addedRecords as List<GrafikForm>;
             if (addData != null)
             {
                 foreach (var data in addData)
                 {
-                    await _appService.Insert(data as GrafikForm);
+                    await this.appService.Insert(data as GrafikForm);
                     records = addedRecords;
                 }
             }
+
             List<GrafikForm>? updateData = changedRecords as List<GrafikForm>;
             if (updateData != null)
             {
                 foreach (var data in updateData)
                 {
-                    await _appService.Update(data as GrafikForm);
+                    await this.appService.Update(data as GrafikForm);
                     records = changedRecords;
                 }
             }

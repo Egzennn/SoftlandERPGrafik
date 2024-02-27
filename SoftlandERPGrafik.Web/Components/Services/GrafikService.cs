@@ -38,56 +38,93 @@
 
         public async Task<IEnumerable<OrganizacjaLokalizacje>> GetLocalizationAsync() => await this.lokalizacjeRepository.GetAllAsync();
 
-        public async Task<IEnumerable<GrafikForm>> Get()
+        public async Task<IEnumerable<GrafikForm>> GetEvents()
         {
             return await this.grafikRepository.GetAllAsync();
+        }
+
+        public async Task<IEnumerable<GrafikForm>> Get()
+        {
+            IEnumerable<GrafikForm> grafikForms = await this.grafikRepository.GetAllAsync();
+
+            DateTime selectedDate = DateTime.UtcNow.ToLocalTime();
+
+            List<GrafikForm> eventData = new List<GrafikForm>();
+
+            foreach (var grafikForm in grafikForms)
+            {
+                eventData.Add(new GrafikForm
+                {
+                    Id = grafikForm.Id,
+                    StartTime = grafikForm.StartTime,
+                    EndTime = grafikForm.EndTime,
+                    LocationId = grafikForm.LocationId,
+                    Description = grafikForm.Description,
+                    IsAllDay = grafikForm.IsAllDay,
+                    PRI_PraId = grafikForm.PRI_PraId,
+                    DZL_DzlId = grafikForm.DZL_DzlId,
+                    RecurrenceID = grafikForm.RecurrenceID,
+                    RecurrenceRule = grafikForm.RecurrenceRule,
+                    RecurrenceException = grafikForm.RecurrenceException,
+                    IsReadonly = grafikForm.StartTime < selectedDate && grafikForm.EndTime < selectedDate,
+                    Stan = grafikForm.Stan,
+                    Status = grafikForm.Status,
+                    CreatedBy = grafikForm.CreatedBy,
+                });
+            }
+
+            return eventData;
         }
 
         public async Task Insert(GrafikForm appointment)
         {
             var app = new GrafikForm();
+            var userDetails = await this.userDetailsService.GetUserAllDetailsAsync();
+
             app.StartTime = appointment.StartTime;
             app.EndTime = appointment.EndTime;
+            app.PRI_PraId = appointment.PRI_PraId;
+            app.DZL_DzlId = appointment.DZL_DzlId;
             app.IsAllDay = appointment.IsAllDay;
             app.LocationId = appointment.LocationId;
             app.Description = appointment.Description;
             app.RecurrenceRule = appointment.RecurrenceRule;
             app.RecurrenceID = appointment.RecurrenceID;
             app.RecurrenceException = appointment.RecurrenceException;
-            await mainContext.GrafikForms.AddAsync(app).ConfigureAwait(true);
-            await mainContext.SaveChangesAsync();
+            app.CreatedBy = userDetails?.SamAccountName;
+            app.Stan = "Plan";
 
+            await this.grafikRepository.InsertAsync(app);
         }
 
         public async Task Update(GrafikForm appointment)
         {
-            var app = await mainContext.GrafikForms.FirstAsync(c => c.Id == appointment.Id);
+            var app = await this.grafikRepository.GetByIdAsync(appointment.Id);
+            var userDetails = await userDetailsService.GetUserAllDetailsAsync();
 
             if (app != null)
             {
                 app.StartTime = appointment.StartTime;
                 app.EndTime = appointment.EndTime;
+                app.PRI_PraId = appointment.PRI_PraId;
+                app.DZL_DzlId = appointment.DZL_DzlId;
                 app.IsAllDay = appointment.IsAllDay;
                 app.LocationId = appointment.LocationId;
                 app.Description = appointment.Description;
                 app.RecurrenceRule = appointment.RecurrenceRule;
                 app.RecurrenceID = appointment.RecurrenceID;
                 app.RecurrenceException = appointment.RecurrenceException;
+                app.Updated = DateTime.Now;
+                app.UpdatedBy = userDetails?.SamAccountName;
+                app.Stan = appointment.Stan;
 
-                mainContext.GrafikForms?.Update(app);
-                await mainContext.SaveChangesAsync();
+                await this.grafikRepository.UpdateAsync(app);
             }
         }
 
         public async Task Delete(Guid appointmentId)
         {
-            var app = await mainContext.GrafikForms.FirstAsync(c => c.Id == appointmentId);
-
-            if (app != null)
-            {
-                mainContext.GrafikForms?.Remove(app);
-                await mainContext.SaveChangesAsync();
-            }
+            await this.grafikRepository.DeleteAsync(appointmentId);
         }
 
     }

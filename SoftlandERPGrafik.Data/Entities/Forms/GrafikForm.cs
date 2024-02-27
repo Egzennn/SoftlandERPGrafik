@@ -1,5 +1,6 @@
 ﻿using SoftlandERPGrafik.Data.Entities;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SoftlandERGrafik.Data.Entities.Forms
 {
@@ -25,5 +26,8 @@ namespace SoftlandERGrafik.Data.Entities.Forms
         public string? RecurrenceRule { get; set; }
 
         public string? RecurrenceException { get; set; }
+
+        [NotMapped]
+        public bool IsReadonly { get; set; }
     }
 }
