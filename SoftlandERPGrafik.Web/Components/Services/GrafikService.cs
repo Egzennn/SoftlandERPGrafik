@@ -128,6 +128,5 @@
         {
             await this.grafikRepository.DeleteAsync(appointmentId);
         }
-
     }
 }

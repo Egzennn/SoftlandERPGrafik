@@ -6,13 +6,11 @@ using SoftlandERPGrafik.Data.Entities.Staff.AD;
 using SoftlandERPGrafik.Data.Entities.Views;
 using SoftlandERPGrafik.Data.Entities.Vocabularies.Forms.Ogolne;
 using Syncfusion.Blazor;
-using Syncfusion.Blazor.Buttons;
 using Syncfusion.Blazor.Data;
 using Syncfusion.Blazor.DropDowns;
 using Syncfusion.Blazor.Inputs;
 using Syncfusion.Blazor.Navigations;
 using Syncfusion.Blazor.Schedule;
-using Syncfusion.Blazor.Schedule.Internal;
 using System.DirectoryServices.AccountManagement;
 using System.Globalization;
 using System.Timers;
@@ -29,30 +27,20 @@ namespace SoftlandERPGrafik.Web.Components.Pages
         private Query ResourceQuery { get; set; } = new Query();
         private Query LocalizationQuery { get; set; } = new Query();
         SfTextBox SubjectRef;
-        SfCheckBox<bool> ViewRef;
-        SfTextBox DescriptionRef;
         SfMultiSelect<int[], ZatrudnieniDzialy> DepartamentRef;
         SfMultiSelect<int[], OsobaData> ResourceRef;
         SfMultiSelect<int[], OrganizacjaLokalizacje> LocationRef;
         SfSchedule<GrafikForm> ScheduleRef;
         bool isCreated;
         private Timezone TimezoneData { get; set; } = new Timezone();
-        private IEnumerable<ZatrudnieniZrodlo> Acronyms = new List<ZatrudnieniZrodlo>();
         private static IEnumerable<OsobaData> Osoby;
         private static IEnumerable<ZatrudnieniDzialy> Dzialy;
         private IEnumerable<Kierownicy> Kierownik;
-        private List<GrafikForm> DataSource;
         private IEnumerable<OrganizacjaLokalizacje> LocalizationData;
         private List<string> ogolneStany = new List<string>();
-        private int spacing { get; set; } = 4;
-        private DateTime CurrentDate = new DateTime(DateTime.Today.Year, 1, 9);
         private List<GrafikForm> gridDataSource = new List<GrafikForm>();
         private bool ShowSchedule { get; set; } = true;
         private string SearchValue { get; set; }
-        private string SubjectValue { get; set; }
-        private string LocationValue { get; set; }
-        private DateTime? DateStart { get; set; }
-        private DateTime? DateEnd { get; set; }
         public GrafikForm EventData { get; set; }
         public CellClickEventArgs CellData { get; set; }
         private bool isCell { get; set; }
@@ -61,63 +49,52 @@ namespace SoftlandERPGrafik.Web.Components.Pages
         private int SlotCount { get; set; } = 2;
         private int SlotInterval { get; set; } = 60;
         private int FirstDayOfWeek { get; set; } = 1;
-        private bool EnableGroup { get; set; } = true;
         private bool TooltipEnable { get; set; } = true;
         private bool isRowAutoHeight { get; set; } = false;
         private bool EnableTimeScale { get; set; } = false;
         private bool isQuickInfoCreated { get; set; } = false;
-        private CalendarWeekRule WeekRule { get; set; } = CalendarWeekRule.FirstDay;
         private View CurrentView { get; set; } = View.TimelineMonth;
-        private string SelectedView { get; set; } = "Month";
         private string TimeFormat { get; set; } = "HH:mm";
         private bool IsSettingsVisible { get; set; } = false;
         public string[] GroupData = new string[] { "Dzialy", "Osoby" };
         private DateTime SystemTime { get; set; } = DateTime.UtcNow.ToLocalTime();
         private DateTime SelectedDate { get; set; } = DateTime.UtcNow.ToLocalTime();
-        private DateTime? StartWorkHour { get; set; } = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 9, 0, 0);
-        private DateTime? EndWorkHour { get; set; } = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 18, 0, 0);
-        private DateTime? ScheduleStartHour { get; set; } = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);
-        private DateTime? ScheduleEndHour { get; set; } = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 23, 59, 59);
-        private int[] SelectedDepartament;
-        private int[] SelectedResource;
-        private int[] SelectedLocation;
-        private int[] WorkDays { get; set; } = new int[] { 1, 2, 3, 4, 5 };
         private bool disableState;
 
         protected override async Task OnInitializedAsync()
         {
-            //this.aduser = this.ADRepository.GetAllADUsers();
+            this.aduser = this.ADRepository.GetAllADUsers();
             Osoby = await this.GrafikService.GetEmployeesAsync();
             Dzialy = await this.GrafikService.GetDzialyAsync();
             this.TimezoneData = new Timezone().GetSystemTimeZone();
             this.LocalizationData = await this.GrafikService.GetLocalizationAsync();
             this.userDetails = await this.UserDetailsService.GetUserAllDetailsAsync();
-            this.Kierownik = await Kierownicy.GetAllAsync();
-            //var allStates = await StanVocabulary.GetAllAsync();
-            //this.ogolneStany = allStates.Where(s => (s as OgolneStan)?.Stan == "Aktywny").OrderBy(s => (s as OgolneStan)?.Wartosc).Select(s => (s as OgolneStan)?.Wartosc).ToList();
+            //this.Kierownik = await Kierownicy.GetAllAsync();
+            var allStates = await StanVocabulary.GetAllAsync();
+            this.ogolneStany = allStates.Where(s => (s as OgolneStan)?.Stan == "Aktywny").OrderBy(s => (s as OgolneStan)?.Wartosc).Select(s => (s as OgolneStan)?.Wartosc).ToList();
         }
 
-        //private string? GetADUserInfo(string PRI_Opis)
-        //{
-        //    if (string.IsNullOrEmpty(PRI_Opis))
-        //    {
-        //        return null;
-        //    }
-        //    else
-        //    {
-        //        var matchingUser = this.aduser.FirstOrDefault(user => user.Login == PRI_Opis);
+        private string? GetADUserInfo(string pRI_Opis)
+        {
+            if (string.IsNullOrEmpty(pRI_Opis))
+            {
+                return null;
+            }
+            else
+            {
+                var matchingUser = this.aduser?.FirstOrDefault(user => user.Login == pRI_Opis);
 
-        //        if (matchingUser != null)
-        //        {
-        //            string JobTitle = matchingUser.JobTitle;
-        //            return JobTitle;
-        //        }
-        //        else
-        //        {
-        //            return "Pracownik";
-        //        }
-        //    }
-        //}
+                if (matchingUser == null)
+                {
+                    return "Pracownik";
+                }
+                else
+                {
+                    string? jobTitle = matchingUser?.JobTitle;
+                    return jobTitle;
+                }
+            }
+        }
 
         private bool IsCurrentUserAuthorized(int? priPraId)
         {
@@ -125,20 +102,20 @@ namespace SoftlandERPGrafik.Web.Components.Pages
             return this.userDetails?.SamAccountName == priOpis;
         }
 
-        private int? DepartmentManagerCRUD()
-        {
-            bool isManager = Kierownik.Any(o => o.PRI_Opis == userDetails?.SamAccountName);
+        //private int? DepartmentManagerCRUD()
+        //{
+        //    bool isManager = Kierownik.Any(o => o.PRI_Opis == userDetails?.SamAccountName);
 
-            if (isManager)
-            {
-                var priOpis = Kierownik.FirstOrDefault(o => o.PRI_Opis == userDetails?.SamAccountName)?.CNT_Nazwa;
-                int? idDzial = Dzialy.FirstOrDefault(o => string.Equals(o.DZL_Kod, priOpis, StringComparison.OrdinalIgnoreCase)).DZL_DzlId;
+        //    if (isManager)
+        //    {
+        //        var priOpis = Kierownik.FirstOrDefault(o => o.PRI_Opis == userDetails?.SamAccountName)?.CNT_Nazwa;
+        //        int? idDzial = Dzialy.FirstOrDefault(o => string.Equals(o.DZL_Kod, priOpis, StringComparison.OrdinalIgnoreCase)).DZL_DzlId;
 
-                return idDzial;
-            }
+        //        return idDzial;
+        //    }
 
-            return null;
-        }
+        //    return null;
+        //}
 
         private OsobaData GetOsobaBySamAccountName(string samAccountName)
         {
@@ -154,7 +131,6 @@ namespace SoftlandERPGrafik.Web.Components.Pages
         }
 
         // Style
-
         public async Task OnEventRendered(EventRenderedArgs<GrafikForm> args)
         {
             Dictionary<string, object> attributes = new Dictionary<string, object>();
@@ -275,7 +251,8 @@ namespace SoftlandERPGrafik.Web.Components.Pages
 
                 // Łączymy filtry operatorem "lub" (Or).
                 predicate = filters.Aggregate((filter1, filter2) => filter1.Or(filter2));
-                this.LocalizationQuery = new Query().Where(predicate);
+                //this.LocalizationQuery = new Query().Where(predicate);
+                this.LocalizationQuery = new Query().AddParams("LocationId", args.Value);
             }
             else
             {

@@ -30,6 +30,7 @@
 @using Syncfusion.Blazor.SplitButtons
 @using System.ComponentModel.DataAnnotations
 
+<PageTitle>Harmonogram - SoftlandERP</PageTitle>
 <div class="schedule-overview">
     <div class="">
         <SfAppBar ColorMode="AppBarColor.Primary">
@@ -230,13 +231,13 @@
                                 var priPraId = (context as GrafikForm)?.PRI_PraId;
                                 var isAuthorized = IsCurrentUserAuthorized(priPraId);
                                 var dzlDzlId = (context as GrafikForm)?.DZL_DzlId;
-                                var isAuthorizedManager = DepartmentManagerCRUD();
+                                // var isAuthorizedManager = DepartmentManagerCRUD();
                                 var startTime = (context as GrafikForm)?.StartTime;
                             }
                             <div class="cell-footer">
-                                @if (priPraId != 0 && ((isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))
+                                @* @if (priPraId != 0 && ((isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))
                                 || (!isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))))
-                                {
+                                { *@
                                     @if (isAddMode)
                                     {
                                         var todayDate = DateTime.Now.Date;
@@ -258,14 +259,14 @@
                                                   OnClick="@(e => OnMoreDetailsClick(e, (context as GrafikForm), true))"
                                                   disabled="@(isReadOnly ? true : false)">
                                         </SfButton>
-                                        @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
-                                        {
+                                        @* @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
+                                        { *@
                                             <SfButton CssClass="e-event-delete" Content="Usuń" OnClick="@(e => OnDelete(context as GrafikForm))"
                                                       disabled="@(isReadOnly ? true : false)">
                                             </SfButton>
-                                        }
+                                        @* } *@
                                     }
-                                }
+                                @* } *@
                             </div>
                         </FooterTemplate>
                     </ScheduleQuickInfoTemplates>
@@ -280,11 +281,11 @@
                                     <div style="margin-left: 25px;">
                                         <div class="e-text-ellipsis e-resource-text">@(resourceData.Imie_Nazwisko)</div>
                                         @{
-                                            // var adUserInfo = GetADUserInfo(resourceData.PRI_Opis);
-                                            // if (adUserInfo != null)
-                                            // {
-                                            //     <div class="e-text-ellipsis e-resource-text">@adUserInfo.ToString()</div>
-                                            // }
+                                            var adUserInfo = GetADUserInfo(resourceData.PRI_Opis);
+                                            if (adUserInfo != null)
+                                            {
+                                                <div class="e-text-ellipsis e-resource-text">@adUserInfo.ToString()</div>
+                                            }
                                         }
                                     </div>
                                 }
@@ -311,7 +312,7 @@
                         <EditorTemplate>
                             @{
                                 var Data = (context as GrafikForm);
-                                var isAuthorizedManager = DepartmentManagerCRUD();
+                                // var isAuthorizedManager = DepartmentManagerCRUD();
                             }
                             <div class="e-dialog-parent">
                                 <table class="custom-event-editor" width="100%" cellpadding="5" style="padding-bottom: 14px">
@@ -405,7 +406,7 @@
                                                 </div>
                                             </td>
                                         </tr>
-                                        @if (Data.Stan != null && isAuthorizedManager.HasValue)
+                                        @if (Data.Stan != null @* && isAuthorizedManager.HasValue *@)
                                         {
                                             <tr>
                                                 <td>
