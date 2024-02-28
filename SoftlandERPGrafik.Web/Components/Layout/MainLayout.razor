@@ -1,6 +1,9 @@
 ﻿@inherits LayoutComponentBase
 @inject IJSRuntime JS
 
+<head>
+    <link href=@("_content/Syncfusion.Blazor.Themes/" + themeName + ".css") rel="stylesheet" />
+</head>
 <MudThemeProvider @bind-IsDarkMode="@darkModeActive" Theme="_theme" />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -39,18 +42,13 @@
     bool _drawerOpen = false;
     private MudTheme _theme = new();
     private bool darkModeActive = false;
+    private string themeName = "bootstrap5";
 
     void ToggleDarkMode()
     {
         this.darkModeActive = !this.darkModeActive;
-        // if (darkModeActive == true)
-        // {
-        //     JS.InvokeAsync<object>("setTheme", "fluent-dark");
-        // }
-        // else
-        // {
-        //     JS.InvokeAsync<object>("setTheme", "fluent");
-        // }
+        themeName = darkModeActive ? "bootstrap5-dark" : "bootstrap5";
+        StateHasChanged();
     }
     void DrawerToggle()
     {

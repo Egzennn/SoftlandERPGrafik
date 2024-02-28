@@ -170,7 +170,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
             if (!string.IsNullOrEmpty(SearchValue) && ScheduleRef != null)
             {
                 Query query = new Query().Search(SearchValue, new List<string> { "Description" }, null, true, true);
-                List<GrafikForm> eventCollections = await ScheduleRef.GetEventsAsync(null, null, true);
+                List<GrafikForm> eventCollections = await this.ScheduleRef.GetEventsAsync(null, null, true);
                 object data = await new DataManager() { Json = eventCollections }.ExecuteQuery<GrafikForm>(query);
                 List<GrafikForm> resultData = (data as List<GrafikForm>);
                 if (resultData.Count > 0)
@@ -300,7 +300,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
 
         private async void OnMoreDetailsClick(MouseEventArgs args, GrafikForm data, bool isEventData)
         {
-            await ScheduleRef.CloseQuickInfoPopupAsync();
+            await this.ScheduleRef.CloseQuickInfoPopupAsync();
             GrafikForm eventData = new GrafikForm
             {
                 Id = data.Id,
@@ -320,20 +320,20 @@ namespace SoftlandERPGrafik.Web.Components.Pages
 
             if (isEventData == false)
             {
-                await ScheduleRef.OpenEditorAsync(eventData, CurrentAction.Add);
+                await this.ScheduleRef.OpenEditorAsync(eventData, CurrentAction.Add);
             }
             else
             {
-                await ScheduleRef.OpenEditorAsync(eventData, !string.IsNullOrEmpty(eventData.RecurrenceRule) ? CurrentAction.EditOccurrence : CurrentAction.Save);
+                await this.ScheduleRef.OpenEditorAsync(eventData, !string.IsNullOrEmpty(eventData.RecurrenceRule) ? CurrentAction.EditOccurrence : CurrentAction.Save);
             }
         }
 
         private async Task OnDelete(GrafikForm data)
         {
-            await ScheduleRef.CloseQuickInfoPopupAsync();
+            await this.ScheduleRef.CloseQuickInfoPopupAsync();
             //await GrafikService.DeleteAppointment(data.Id);
             Snackbar.Add("Usunięto wpis", Severity.Warning);
-            await ScheduleRef.RefreshEventsAsync();
+            await this.ScheduleRef.RefreshEventsAsync();
         }
 
         private void BeforeOpenHandler(BeforeOpenCloseMenuEventArgs<MenuItem> e)
@@ -364,7 +364,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
 
         private async Task PopupClose()
         {
-            await ScheduleRef.CloseQuickInfoPopupAsync();
+            await this.ScheduleRef.CloseQuickInfoPopupAsync();
         }
 
         private void OnViewButtonClick(View targetView)
@@ -428,13 +428,13 @@ namespace SoftlandERPGrafik.Web.Components.Pages
             {
                 StreamReader reader = new StreamReader(file.File.OpenReadStream(long.MaxValue));
                 string fileContent = await reader.ReadToEndAsync();
-                await ScheduleRef.ImportICalendarAsync(fileContent);
+                await this.ScheduleRef.ImportICalendarAsync(fileContent);
             }
         }
 
         public async void OnPrintClick()
         {
-            await ScheduleRef.PrintAsync();
+            await this.ScheduleRef.PrintAsync();
         }
 
         public async void OnExportClick(Syncfusion.Blazor.SplitButtons.MenuEventArgs args)
@@ -442,8 +442,8 @@ namespace SoftlandERPGrafik.Web.Components.Pages
             if (args.Item.Text == "Excel")
             {
                 List<GrafikForm> ExportDatas = new List<GrafikForm>();
-                List<GrafikForm> EventCollection = await ScheduleRef.GetEventsAsync();
-                List<Syncfusion.Blazor.Schedule.Resource> ResourceCollection = ScheduleRef.GetResourceCollections();
+                List<GrafikForm> EventCollection = await this.ScheduleRef.GetEventsAsync();
+                List<Syncfusion.Blazor.Schedule.Resource> ResourceCollection = this.ScheduleRef.GetResourceCollections();
                 List<OsobaData> ResourceData = ResourceCollection[0].DataSource as List<OsobaData>;
                 foreach (var osoba in Osoby)
                 {
@@ -462,11 +462,11 @@ namespace SoftlandERPGrafik.Web.Components.Pages
                     DateFormat = "MM.dd.yyyy HH:mm:ss",
                     FileName = "Grafik na dzień:" + DateTime.UtcNow.ToLocalTime()
                 };
-                await ScheduleRef.ExportToExcelAsync(Options);
+                await this.ScheduleRef.ExportToExcelAsync(Options);
             }
             else
             {
-                await ScheduleRef.ExportToICalendarAsync();
+                await this.ScheduleRef.ExportToICalendarAsync();
             }
         }
 
@@ -474,11 +474,11 @@ namespace SoftlandERPGrafik.Web.Components.Pages
         {
             if (args.ParentItem == null)
             {
-                CellData = await ScheduleRef.GetTargetCellAsync((int)args.Left, (int)args.Top);
-                await ScheduleRef.CloseQuickInfoPopupAsync();
+                CellData = await this.ScheduleRef.GetTargetCellAsync((int)args.Left, (int)args.Top);
+                await this.ScheduleRef.CloseQuickInfoPopupAsync();
                 if (CellData == null)
                 {
-                    EventData = await ScheduleRef.GetTargetEventAsync((int)args.Left, (int)args.Top);
+                    EventData = await this.ScheduleRef.GetTargetEventAsync((int)args.Left, (int)args.Top);
                     if (EventData.Id == null)
                     {
                         args.Cancel = true;
@@ -506,55 +506,61 @@ namespace SoftlandERPGrafik.Web.Components.Pages
         public async Task OnItemSelected(MenuEventArgs<MenuItem> args)
         {
             var SelectedMenuItem = args.Item.Id;
-            var ActiveCellsData = await ScheduleRef.GetSelectedCellsAsync();
+            var ActiveCellsData = await this.ScheduleRef.GetSelectedCellsAsync();
+            DateTime Date = this.ScheduleRef.SelectedDate;
+            DateTime Start = new DateTime(Date.Year, Date.Month, Date.Day, DateTime.Now.Hour, 0, 0);
+            GrafikForm RecurrenceEventData = null;
             if (ActiveCellsData == null)
             {
-                ActiveCellsData = CellData;
+                if (CellData != null)
+                {
+                    ActiveCellsData = CellData;
+                    var resourceDetails = this.ScheduleRef?.GetResourceByIndex(ActiveCellsData.GroupIndex);
+                    RecurrenceEventData = new GrafikForm
+                    {
+                        Id = await this.ScheduleRef.GetMaxEventIdAsync<Guid>(),
+                        StartTime = Start,
+                        EndTime = Start.AddHours(1),
+                        IsAllDay = false,
+                        PRI_PraId = resourceDetails.GroupData.PRI_PraId,
+                        DZL_DzlId = resourceDetails.GroupData.DZL_DzlId,
+                    };
+                }
             }
 
             switch (SelectedMenuItem)
             {
                 case "Today":
                     string key = this.TimezoneData.Key ?? "UTC";
-                    SelectedDate = this.TimeConvertor(key);
+                    this.SelectedDate = this.TimeConvertor(key);
                     break;
                 case "Add":
-                    await ScheduleRef.OpenEditorAsync(ActiveCellsData, CurrentAction.Add);
+                    await this.ScheduleRef.OpenEditorAsync(RecurrenceEventData, CurrentAction.Add);
                     break;
                 case "AddRecurrence":
-                    GrafikForm RecurrenceEventData = null;
-                    var resourceDetails = ScheduleRef.GetResourceByIndex(ActiveCellsData.GroupIndex);
-                    RecurrenceEventData = new GrafikForm
-                    {
-                        Id = await this.ScheduleRef.GetMaxEventIdAsync<Guid>(),
-                        StartTime = ActiveCellsData.StartTime,
-                        EndTime = ActiveCellsData.StartTime.AddHours(1),
-                        IsAllDay = false,
-                        PRI_PraId = resourceDetails.GroupData.PRI_PraId,
-                        DZL_DzlId = resourceDetails.GroupData.DZL_DzlId,
-                        RecurrenceRule = "FREQ=DAILY;INTERVAL=1;",
-                    };
-                    await ScheduleRef.OpenEditorAsync(RecurrenceEventData, CurrentAction.Add);
+                    RecurrenceEventData.RecurrenceRule = "FREQ=DAILY;INTERVAL=1;";
+                    await this.ScheduleRef.OpenEditorAsync(RecurrenceEventData, CurrentAction.Add);
                     break;
                 case "Save":
-                    await ScheduleRef.OpenEditorAsync(EventData, CurrentAction.Save);
+                    await this.ScheduleRef.OpenEditorAsync(this.EventData, CurrentAction.Save);
                     break;
                 case "EditOccurrence":
-                    await ScheduleRef.OpenEditorAsync(EventData, CurrentAction.EditOccurrence);
+                    await this.ScheduleRef.OpenEditorAsync(this.EventData, CurrentAction.EditOccurrence);
                     break;
                 case "EditSeries":
-                    List<GrafikForm> Events = await ScheduleRef.GetEventsAsync();
-                    EventData = (GrafikForm)Events.Where(data => data.RecurrenceID == EventData.RecurrenceID).FirstOrDefault();
-                    await ScheduleRef.OpenEditorAsync(EventData, CurrentAction.EditSeries);
+                    List<GrafikForm>? Events = await this.ScheduleRef.GetEventsAsync();
+                    this.EventData = (GrafikForm)Events.Where(data => data.RecurrenceID == this.EventData.RecurrenceID).FirstOrDefault();
+                    await this.ScheduleRef.OpenEditorAsync(this.EventData, CurrentAction.EditSeries);
                     break;
                 case "Delete":
-                    await OnDelete(EventData);
+                    await this.GrafikService.Delete(this.EventData.Id);
+                    await this.ScheduleRef.RefreshEventsAsync();
                     break;
                 case "DeleteOccurrence":
-                    await ScheduleRef.DeleteEventAsync(EventData, CurrentAction.DeleteOccurrence);
+                    await this.ScheduleRef.DeleteEventAsync(this.EventData, CurrentAction.DeleteOccurrence);
                     break;
                 case "DeleteSeries":
-                    await ScheduleRef.DeleteEventAsync(EventData, CurrentAction.DeleteSeries);
+                    await this.ScheduleRef.DeleteEventAsync(this.EventData, CurrentAction.DeleteSeries);
                     break;
             }
         }

@@ -64,6 +64,7 @@
                              TabIndex=0></ToolbarItem>
                 <ToolbarItem PrefixIcon="e-icons e-plus" TooltipText="Nowe wydarzenie" Text="Nowe wydarzenie" OnClick="OnNewEventAdd" TabIndex=0></ToolbarItem>
                 <ToolbarItem PrefixIcon="e-icons e-repeat" TooltipText="Nowe wydarzenie cykliczne" Text="Nowe wydarzenie cykliczne" OnClick="OnNewRecurringEventAdd" TabIndex=0></ToolbarItem>
+                <ToolbarItem PrefixIcon="e-icons e-refresh" TooltipText="Odśwież" Text="Odśwież" OnClick="@(() => ScheduleRef.RefreshEventsAsync())" TabIndex="0"></ToolbarItem>
                 <ToolbarItem Type="@ItemType.Separator"></ToolbarItem>
                 <ToolbarItem PrefixIcon="e-icons e-day" TooltipText="Dzień" Text="Dzień" OnClick="() => OnViewButtonClick(View.TimelineDay)" TabIndex=0></ToolbarItem>
                 <ToolbarItem PrefixIcon="e-icons e-week" TooltipText="Tydzień" Text="Tydzień" OnClick="() => OnViewButtonClick(View.TimelineWeek)" TabIndex=0></ToolbarItem>
