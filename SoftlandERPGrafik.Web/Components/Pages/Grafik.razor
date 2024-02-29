@@ -180,13 +180,16 @@
                     </ScheduleViews>
                     <ScheduleQuickInfoTemplates>
                         <HeaderTemplate>
+                            @{
+                                GrafikForm Data = (context as GrafikForm);
+                            }
                             <div class="e-header-icon-wrapper">
                                 <SfButton OnClick="PopupClose" Title="Close" IconCss="e-icons e-close-icon e-btn-icon" CssClass="e-control e-btn e-lib e-close e-flat e-round e-small e-icon-btn"></SfButton>
                             </div>
                             <div class="e-subject-wrap">
-                                <div class="e-subject e-text-ellipsis" style="background: @(context as GrafikForm).Color); background-image: @(context as GrafikForm).Style)">
+                                <div class="e-subject e-text-ellipsis" style="background: @Data.Color); background-image: @Data.Style)">
                                     <div class="quick-info-title">
-                                        @(((context as GrafikForm).CreatedBy == null) ? "Dodaj" : "Szczegóły")
+                                        @((Data.CreatedBy == null) ? "Dodaj" : "Szczegóły")
                                     </div>
                                 </div>
                             </div>
@@ -207,7 +210,7 @@
                                         <div class="e-date-time">
                                             <div class="e-date-time-icon e-icons"></div>
                                             <div class="e-date-time-wrapper e-text-ellipsis">
-                                                <div class="e-date-time-details e-text-ellipsis">@(GetEventDetails((context as GrafikForm)))</div>
+                                                <div class="e-date-time-details e-text-ellipsis">@(GetEventDetails(Data))</div>
                                             </div>
                                         </div>
                                         @if (Data.Description != null)
@@ -227,47 +230,48 @@
                         </ContentTemplate>
                         <FooterTemplate>
                             @{
-                                var isReadOnly = (context as GrafikForm)?.IsReadonly ?? false;
-                                var isAddMode = ((context as GrafikForm)?.CreatedBy == null);
-                                var priPraId = (context as GrafikForm)?.PRI_PraId;
+                                GrafikForm Data = (context as GrafikForm);
+                                var isReadOnly = Data?.IsReadonly ?? false;
+                                var isAddMode = (Data?.CreatedBy == null);
+                                var priPraId = Data?.PRI_PraId;
                                 var isAuthorized = IsCurrentUserAuthorized(priPraId);
-                                var dzlDzlId = (context as GrafikForm)?.DZL_DzlId;
-                                // var isAuthorizedManager = DepartmentManagerCRUD();
-                                var startTime = (context as GrafikForm)?.StartTime;
+                                var dzlDzlId = Data?.DZL_DzlId;
+                                var isAuthorizedManager = DepartmentManagerCRUD();
+                                var startTime = Data?.StartTime;
                             }
                             <div class="cell-footer">
-                                @* @if (priPraId != 0 && ((isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))
+                                @if (priPraId != 0 && ((isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))
                                 || (!isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))))
-                                { *@
-                                    @if (isAddMode)
-                                    {
-                                        var todayDate = DateTime.Now.Date;
-                                        var startTimeDate = startTime?.Date;
+                                {
+                                @if (isAddMode)
+                                {
+                                    var todayDate = DateTime.Now.Date;
+                                    var startTimeDate = startTime?.Date;
 
-                                        @if (startTimeDate.HasValue && startTimeDate.Value >= todayDate)
-                                        {
-                                            <SfButton Content="Dodaj grafik" OnClick="@(e => OnMoreDetailsClick(e, (context as GrafikForm), false))"></SfButton>
-                                        }
-                                        else
-                                        {
-                                            <SfButton Content="Dodaj grafik" OnClick="@(e => OnMoreDetailsClick(e, (context as GrafikForm), false))"
-                                                      disabled></SfButton>
-                                        }
+                                    @if (startTimeDate.HasValue && startTimeDate.Value >= todayDate)
+                                    {
+                                        <SfButton Content="Dodaj grafik" OnClick="@(e => OnMoreDetailsClick(e, Data, false))"></SfButton>
                                     }
                                     else
                                     {
-                                        <SfButton CssClass="e-event-edit" Content="Edycja"
-                                                  OnClick="@(e => OnMoreDetailsClick(e, (context as GrafikForm), true))"
-                                                  disabled="@(isReadOnly ? true : false)">
-                                        </SfButton>
-                                        @* @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
-                                        { *@
-                                            <SfButton CssClass="e-event-delete" Content="Usuń" OnClick="@(e => OnDelete(context as GrafikForm))"
-                                                      disabled="@(isReadOnly ? true : false)">
-                                            </SfButton>
-                                        @* } *@
+                                        <SfButton Content="Dodaj grafik" OnClick="@(e => OnMoreDetailsClick(e, Data, false))"
+                                                  disabled></SfButton>
                                     }
-                                @* } *@
+                                }
+                                else
+                                {
+                                    <SfButton CssClass="e-event-edit" Content="Edycja"
+                                              OnClick="@(e => OnMoreDetailsClick(e, Data, true))"
+                                              disabled="@(isReadOnly ? true : false)">
+                                    </SfButton>
+                                    @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
+                                {
+                                    <SfButton CssClass="e-event-delete" Content="Usuń" OnClick="@(e => OnDelete(Data))"
+                                              disabled="@(isReadOnly ? true : false)">
+                                    </SfButton>
+                                    }
+                                }
+                                }
                             </div>
                         </FooterTemplate>
                     </ScheduleQuickInfoTemplates>
@@ -301,19 +305,23 @@
                             <div class="date-text">@(((context as TemplateContext).Date).ToString("ddd", CultureInfo.CurrentCulture))</div>
                         </DateHeaderTemplate>
                         <EditorHeaderTemplate>
-                            @if ((context as GrafikForm).Id == null)
+                            @{
+                                GrafikForm Data = (context as GrafikForm);
+                                var osobaData = GetOsobaDataByDzlId(Data.PRI_PraId);
+                            }
+                            @if (Data.CreatedBy == null)
                             {
-                                <div>Dodaj grafik pracy</div>
+                                <div>Dodaj grafik pracy dla @osobaData.Imie_Nazwisko</div>
                             }
                             else
                             {
-                                <div>Edytuj grafik pracy</div>
+                                <div>Edytuj grafik pracy dla @osobaData.Imie_Nazwisko</div>
                             }
                         </EditorHeaderTemplate>
                         <EditorTemplate>
                             @{
                                 var Data = (context as GrafikForm);
-                                // var isAuthorizedManager = DepartmentManagerCRUD();
+                                var isAuthorizedManager = DepartmentManagerCRUD();
                             }
                             <div class="e-dialog-parent">
                                 <table class="custom-event-editor" width="100%" cellpadding="5" style="padding-bottom: 14px">
@@ -366,7 +374,7 @@
                                                 <div class="e-location-row">
                                                     <div class="e-texttd">Stanowisko pracy</div>
                                                     <div>
-                                                        <SfDropDownList ID="LocationEventType" DataSource="@LocalizationData" Placeholder="Wybierz stanowisko pracy" @bind-Value="@((context as GrafikForm).LocationId)">
+                                                        <SfDropDownList ID="LocationEventType" DataSource="@LocalizationData" Placeholder="Wybierz stanowisko pracy" @bind-Value="@(Data.LocationId)">
                                                             <DropDownListFieldSettings Value="Lok_LokId" Text="Wartosc"></DropDownListFieldSettings>
                                                         </SfDropDownList>
                                                         <ValidationMessage For="()=>(Data.LocationId)" />
@@ -379,42 +387,39 @@
                                                 <div class="e-recurrenceeditor">
                                                     <div class="e-texttd">Powtarzalność</div>
                                                     <div>
-                                                        <SfRecurrenceEditor @bind-Value="@((context as GrafikForm).RecurrenceRule)"></SfRecurrenceEditor>
+                                                        <SfRecurrenceEditor @bind-Value="@(Data.RecurrenceRule)"></SfRecurrenceEditor>
                                                     </div>
                                                 </div>
                                             </td>
                                         </tr>
-                                        @*                                             <tr>
-                                        <td>
-                                        <div class="e-resource-row">
-                                        <div class="e-texttd">Osoby</div>
-                                        <div>
-                                        <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="ResourceRef" TValue="int[]" TItem="OsobaData" DataSource="@Osoby" Placeholder="Osoba" @bind-Value="@((context as GrafikForm).PRI_PraId)" @on-ValueChanged="OnOsobyChanged">
-                                        <MultiSelectFieldSettings Text="Imie_Nazwisko" Value="PRI_PraId"></MultiSelectFieldSettings>
-                                        </SfMultiSelect>
-                                        </div>
-                                        </div>
-                                        </td>
+@*                                         <tr>
+                                            <td>
+                                                <div class="e-resource-row">
+                                                    <div class="e-texttd">Osoby</div>
+                                                    <div>
+                                                        
+                                                    </div>
+                                                </div>
+                                            </td>
                                         </tr>
-                                        *@
-                                        <tr>
+ *@                                        <tr>
                                             <td>
                                                 <div class="e-description-row">
                                                     <div class="e-texttd">Notatka</div>
                                                     <div>
-                                                        <SfTextBox Multiline="true" @bind-Value="@((context as GrafikForm).Description)"></SfTextBox>
+                                                        <SfTextBox Multiline="true" @bind-Value="@(Data.Description)"></SfTextBox>
                                                     </div>
                                                 </div>
                                             </td>
                                         </tr>
-                                        @if (Data.Stan != null @* && isAuthorizedManager.HasValue *@)
+                                        @if (Data.Stan != null && isAuthorizedManager.HasValue)
                                         {
                                             <tr>
                                                 <td>
                                                     <div class="e-location-row">
                                                         <div class="e-texttd">Stan</div>
                                                         <div>
-                                                            <SfDropDownList ID="StanEventType" DataSource="@ogolneStany" Placeholder="Stan" @bind-Value="@((context as GrafikForm).Stan)">
+                                                            <SfDropDownList ID="StanEventType" DataSource="@ogolneStany" Placeholder="Stan" @bind-Value="@(Data.Stan)">
                                                                 <DropDownListFieldSettings Value="Wartosc" Text="Wartosc"></DropDownListFieldSettings>
                                                             </SfDropDownList>
                                                         </div>

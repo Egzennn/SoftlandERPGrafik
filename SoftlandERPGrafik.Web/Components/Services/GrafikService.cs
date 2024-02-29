@@ -112,7 +112,7 @@
                 app.DZL_DzlId = appointment.DZL_DzlId;
                 app.IsAllDay = appointment.IsAllDay;
                 app.LocationId = appointment.LocationId;
-                app.Description = appointment.Description;
+                app.Description = string.IsNullOrWhiteSpace(appointment.Description) ? null : appointment.Description;
                 app.RecurrenceRule = appointment.RecurrenceRule;
                 app.RecurrenceID = appointment.RecurrenceID;
                 app.RecurrenceException = appointment.RecurrenceException;

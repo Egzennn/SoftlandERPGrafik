@@ -10,8 +10,8 @@ namespace SoftlandERGrafik.Data.Entities.Forms
 
         public DateTime EndTime { get; set; }
 
-        [Required]
-        public int LocationId { get; set; }
+        [Required(ErrorMessage = "Wybór stanowiska pracy jest wymagany")]
+        public int? LocationId { get; set; }
 
         public string? Description { get; set; }
 
