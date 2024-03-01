@@ -43,9 +43,9 @@
             return await this.grafikRepository.GetAllAsync();
         }
 
-        public async Task<IEnumerable<GrafikForm>> Get(DateTime StartDate, DateTime EndDate)
+        public async Task<IEnumerable<GrafikForm>> Get(DateTime startDate, DateTime endDate)
         {
-            IEnumerable<GrafikForm> grafikForms = mainContext.GrafikForms.Where(e => e.StartTime >= StartDate && e.EndTime <= EndDate);
+            IEnumerable<GrafikForm> grafikForms = this.mainContext.GrafikForms.Where(e => e.StartTime >= startDate && e.EndTime <= endDate);
 
             DateTime selectedDate = DateTime.UtcNow.ToLocalTime();
 

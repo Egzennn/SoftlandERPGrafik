@@ -144,10 +144,10 @@
                         </TooltipTemplate>
                         <Template>
                             @{
-                                GrafikForm webinarData = (context as GrafikForm);
+                                GrafikForm? webinarData = (context as GrafikForm);
                                 if (LocalizationData != null)
                                 {
-                                    OrganizacjaLokalizacje location = LocalizationData.FirstOrDefault(x => x.Lok_LokId == webinarData.LocationId);
+                                    OrganizacjaLokalizacje? location = LocalizationData.FirstOrDefault(x => x.Lok_LokId == webinarData.LocationId);
                                     string locationName = (location != null) ? location.Wartosc : webinarData.LocationId.ToString();
                                     string formattedStartTime = webinarData.StartTime.ToString("HH:mm");
                                     string formattedEndTime = webinarData.EndTime.ToString("HH:mm");
