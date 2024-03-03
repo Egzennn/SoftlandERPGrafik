@@ -52,7 +52,6 @@ builder.Services.AddTransient<IRepository<ZatrudnieniZrodlo>, Repository<Zatrudn
 builder.Services.AddTransient<IRepository<Kierownicy>, Repository<Kierownicy>>();
 
 builder.Services.AddDbContext<MainContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MainConnection")));
-builder.Services.AddDbContext<MainContextBonus>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MainConnection")));
 builder.Services.AddDbContext<OptimaContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("OptimaConnection")));
 
 builder.Services.Configure<ADConfiguration>(builder.Configuration.GetRequiredSection("ADConfiguration"));

@@ -29,18 +29,18 @@ namespace SoftlandERPGrafik.Web.Components.Pages
         private Query ResourceQuery { get; set; } = new Query();
         private Query LocalizationQuery { get; set; } = new Query();
         SfTextBox SubjectRef;
-        SfMultiSelect<int[], ZatrudnieniDzialy> DepartamentRef;
-        SfMultiSelect<int[], OsobaData> ResourceRef;
-        SfMultiSelect<int[], OrganizacjaLokalizacje> LocationRef;
-        SfSchedule<GrafikForm> ScheduleRef;
+        SfMultiSelect<int[], ZatrudnieniDzialy>? DepartamentRef;
+        SfMultiSelect<int[], OsobaData>? ResourceRef;
+        SfMultiSelect<int[], OrganizacjaLokalizacje>? LocationRef;
+        SfSchedule<GrafikForm>? ScheduleRef;
         bool isCreated;
         private Timezone TimezoneData { get; set; } = new Timezone();
-        private static IEnumerable<OsobaData> Osoby;
-        private static IEnumerable<ZatrudnieniDzialy> Dzialy;
-        private IEnumerable<Kierownicy> Kierownik;
-        private IEnumerable<OrganizacjaLokalizacje> LocalizationData;
-        private List<string?> ogolneStany = new List<string?>();
-        private List<GrafikForm> gridDataSource = new List<GrafikForm>();
+        private static IEnumerable<OsobaData>? Osoby;
+        private static IEnumerable<ZatrudnieniDzialy>? Dzialy;
+        private IEnumerable<Kierownicy>? Kierownik;
+        private IEnumerable<OrganizacjaLokalizacje>? LocalizationData;
+        private List<string>? ogolneStany;
+        private List<GrafikForm>? gridDataSource;
         private bool ShowSchedule { get; set; } = true;
         private string SearchValue { get; set; }
         public GrafikForm EventData { get; set; }
@@ -190,7 +190,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
             }
         }
 
-        public void OnDepartamentChange(Syncfusion.Blazor.DropDowns.MultiSelectChangeEventArgs<int[]> args)
+        public void OnMultiSelectChange(Syncfusion.Blazor.DropDowns.MultiSelectChangeEventArgs<int[]> args, string field)
         {
             WhereFilter predicate;
 
@@ -198,63 +198,32 @@ namespace SoftlandERPGrafik.Web.Components.Pages
             {
                 var filters = args.Value.Select(id => new WhereFilter
                 {
-                    Field = "DZL_DzlId",
+                    Field = field,
                     Operator = "equal",
                     value = id,
                 });
 
                 predicate = filters.Aggregate((filter1, filter2) => filter1.Or(filter2));
-                this.ResourceQuery = new Query().Where(predicate);
-            }
-            else
-            {
-                this.ResourceQuery = new Query();
-            }
-        }
 
-        public void OnResourceChange(Syncfusion.Blazor.DropDowns.MultiSelectChangeEventArgs<int[]> args)
-        {
-            WhereFilter predicate;
-
-            if (args.Value != null && args.Value.Length > 0)
-            {
-                var filters = args.Value.Select(id => new WhereFilter
+                if (field == "LocationId")
                 {
-                    Field = "PRI_PraId",
-                    Operator = "equal",
-                    value = id,
-                });
-
-                predicate = filters.Aggregate((filter1, filter2) => filter1.Or(filter2));
-                this.ResourceQuery = new Query().Where(predicate);
-            }
-            else
-            {
-                this.ResourceQuery = new Query();
-            }
-        }
-
-        public void OnLocalizationChange(Syncfusion.Blazor.DropDowns.MultiSelectChangeEventArgs<int[]> args)
-        {
-            WhereFilter predicate;
-
-            if (args.Value != null && args.Value.Length > 0)
-            {
-                var filters = args.Value.Select(id => new WhereFilter
+                    this.LocalizationQuery = new Query().AddParams("LocationId", args.Value);
+                }
+                else
                 {
-                    Field = "LocationId",
-                    Operator = "equal",
-                    value = id,
-                });
-
-                predicate = filters.Aggregate((filter1, filter2) => filter1.Or(filter2));
-                //this.LocalizationQuery = new Query().Where(predicate);
-                this.LocalizationQuery = new Query().AddParams("LocationId", args.Value);
+                    this.ResourceQuery = new Query().Where(predicate);
+                }
             }
             else
             {
-                this.LocalizationQuery = new Query();
-
+                if (field == "LocationId")
+                {
+                    this.LocalizationQuery = new Query();
+                }
+                else
+                {
+                    this.ResourceQuery = new Query();
+                }
             }
         }
 

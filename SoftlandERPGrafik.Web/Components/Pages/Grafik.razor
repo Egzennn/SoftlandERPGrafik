@@ -505,19 +505,19 @@
                 <div class="col-row">
                     <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="DepartamentRef" TValue="int[]" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Placeholder="Dział" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
                          <MultiSelectFieldSettings Text="DZL_Kod" Value="DZL_DzlId"></MultiSelectFieldSettings>
-                         <MultiSelectEvents TValue="int[]" TItem="ZatrudnieniDzialy" ValueChange="OnDepartamentChange"></MultiSelectEvents>
+                         <MultiSelectEvents TValue="int[]" TItem="ZatrudnieniDzialy" ValueChange="@(args => OnMultiSelectChange(args, "DZL_DzlId"))"></MultiSelectEvents>
                      </SfMultiSelect>
                  </div>
                  <div class="col-row">
                      <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="ResourceRef" TValue="int[]" TItem="OsobaData" DataSource="@Osoby" Placeholder="Imię i nazwisko" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
                          <MultiSelectFieldSettings GroupBy="DZL_Kod" Text="Imie_Nazwisko" Value="PRI_PraId"></MultiSelectFieldSettings>
-                         <MultiSelectEvents TValue="int[]" TItem="OsobaData" ValueChange="OnResourceChange"></MultiSelectEvents>
+                         <MultiSelectEvents TValue="int[]" TItem="OsobaData" ValueChange="@(args => OnMultiSelectChange(args, "PRI_PraId"))"></MultiSelectEvents>
                      </SfMultiSelect>
                  </div>
                  <div class="col-row">
                      <SfMultiSelect @ref="LocationRef" TValue="int[]" TItem="OrganizacjaLokalizacje" DataSource="@LocalizationData" Placeholder="Lokalizacja" AllowFiltering="true">
                          <MultiSelectFieldSettings Text="Wartosc" Value="Lok_LokId"></MultiSelectFieldSettings>
-                         <MultiSelectEvents TValue="int[]" TItem="OrganizacjaLokalizacje" ValueChange="OnLocalizationChange"></MultiSelectEvents>
+                         <MultiSelectEvents TValue="int[]" TItem="OrganizacjaLokalizacje" ValueChange="@(args => OnMultiSelectChange(args, "LocationId"))"></MultiSelectEvents>
                      </SfMultiSelect>
                  </div>
                  <div class="col-row">

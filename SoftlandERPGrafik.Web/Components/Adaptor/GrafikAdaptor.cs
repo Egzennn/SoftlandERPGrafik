@@ -17,11 +17,23 @@ namespace SoftlandERPGrafik.Web.Components.Adaptor
         //Performs Read operation
         public override async Task<object> ReadAsync(DataManagerRequest dataManagerRequest, string key = null)
         {
-            System.Collections.Generic.IDictionary<string, object> Params = dataManagerRequest.Params;
-            DateTime start = DateTime.Parse((string)Params["StartDate"]);
-            DateTime end = DateTime.Parse((string)Params["EndDate"]);
-            var EventData = await this.appService.Get(start, end);
-            return dataManagerRequest.RequiresCounts ? new DataResult() : EventData;
+            System.Collections.Generic.IDictionary<string, object> @params = dataManagerRequest.Params;
+
+            DateTime start = DateTime.Parse((string)@params["StartDate"]);
+            DateTime end = DateTime.Parse((string)@params["EndDate"]);
+            var eventData = await this.appService.Get(start, end);
+
+            if (@params.ContainsKey("LocationId") && @params["LocationId"] is IEnumerable<object> locationIds)
+            {
+                List<int> locationIdList = locationIds.Select(id => Convert.ToInt32(id)).ToList();
+                var eventDataLocation = eventData.Where(e => locationIdList.Contains(e.LocationId ?? 0)).ToList();
+
+                return dataManagerRequest.RequiresCounts ? new DataResult() : eventDataLocation;
+            }
+            else
+            {
+                return dataManagerRequest.RequiresCounts ? new DataResult() : eventData;
+            }
         }
 
         //Performs Insert operation
@@ -78,6 +90,7 @@ namespace SoftlandERPGrafik.Web.Components.Adaptor
                     records = changedRecords;
                 }
             }
+
             return records;
         }
     }
