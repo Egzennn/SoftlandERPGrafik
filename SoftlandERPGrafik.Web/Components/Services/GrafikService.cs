@@ -38,14 +38,10 @@
 
         public async Task<IEnumerable<OrganizacjaLokalizacje>> GetLocalizationAsync() => await this.lokalizacjeRepository.GetAllAsync();
 
-        public async Task<IEnumerable<GrafikForm>> GetEvents()
-        {
-            return await this.grafikRepository.GetAllAsync();
-        }
-
         public async Task<IEnumerable<GrafikForm>> Get(DateTime startDate, DateTime endDate)
         {
             IEnumerable<GrafikForm> grafikForms = this.mainContext.GrafikForms.Where(e => e.StartTime >= startDate && e.EndTime <= endDate);
+            //IEnumerable<GrafikForm> grafikForms = this.mainContext.GrafikForms.Where(e => e.Id == new Guid("11b0f9d2-cef5-430f-a4d7-a26ce5e6ec9b"));
 
             DateTime selectedDate = DateTime.UtcNow.ToLocalTime();
 
@@ -66,7 +62,7 @@
                     RecurrenceID = grafikForm.RecurrenceID,
                     RecurrenceRule = grafikForm.RecurrenceRule,
                     RecurrenceException = grafikForm.RecurrenceException,
-                    IsReadonly = grafikForm.StartTime < selectedDate && grafikForm.EndTime < selectedDate,
+                    //IsReadonly = true,
                     Stan = grafikForm.Stan,
                     Status = grafikForm.Status,
                     CreatedBy = grafikForm.CreatedBy,

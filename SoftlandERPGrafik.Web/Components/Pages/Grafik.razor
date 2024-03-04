@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@page "/test"
 @inject Microsoft.AspNetCore.Components.NavigationManager UriHelper
 @inject GrafikService GrafikService
 @inject IRepository<OgolneStan> StanVocabulary
@@ -243,34 +243,34 @@
                                 @if (priPraId != 0 && ((isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))
                                 || (!isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))))
                                 {
-                                @if (isAddMode)
-                                {
-                                    var todayDate = DateTime.Now.Date;
-                                    var startTimeDate = startTime?.Date;
-
-                                    @if (startTimeDate.HasValue && startTimeDate.Value >= todayDate)
+                                    @if (isAddMode)
                                     {
-                                        <SfButton Content="Dodaj grafik" OnClick="@(e => OnMoreDetailsClick(e, Data, false))"></SfButton>
+                                        var todayDate = DateTime.Now.Date;
+                                        var startTimeDate = startTime?.Date;
+
+                                        @if (startTimeDate.HasValue && startTimeDate.Value >= todayDate)
+                                        {
+                                            <SfButton Content="Dodaj grafik" OnClick="@(e => OnMoreDetailsClick(e, Data, false))"></SfButton>
+                                        }
+                                        else
+                                        {
+                                            <SfButton Content="Dodaj grafik" OnClick="@(e => OnMoreDetailsClick(e, Data, false))"
+                                                      disabled></SfButton>
+                                        }
                                     }
                                     else
                                     {
-                                        <SfButton Content="Dodaj grafik" OnClick="@(e => OnMoreDetailsClick(e, Data, false))"
-                                                  disabled></SfButton>
+                                        <SfButton CssClass="e-event-edit" Content="Edycja"
+                                                  OnClick="@(e => OnMoreDetailsClick(e, Data, true))"
+                                                  disabled="@(isReadOnly ? true : false)">
+                                        </SfButton>
+                                        @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
+                                        {
+                                            <SfButton CssClass="e-event-delete" Content="Usuń" OnClick="@(e => OnDelete(Data))"
+                                                      disabled="@(isReadOnly ? true : false)">
+                                            </SfButton>
+                                        }
                                     }
-                                }
-                                else
-                                {
-                                    <SfButton CssClass="e-event-edit" Content="Edycja"
-                                              OnClick="@(e => OnMoreDetailsClick(e, Data, true))"
-                                              disabled="@(isReadOnly ? true : false)">
-                                    </SfButton>
-                                    @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
-                                {
-                                    <SfButton CssClass="e-event-delete" Content="Usuń" OnClick="@(e => OnDelete(Data))"
-                                              disabled="@(isReadOnly ? true : false)">
-                                    </SfButton>
-                                    }
-                                }
                                 }
                             </div>
                         </FooterTemplate>
@@ -392,17 +392,18 @@
                                                 </div>
                                             </td>
                                         </tr>
-@*                                         <tr>
-                                            <td>
-                                                <div class="e-resource-row">
-                                                    <div class="e-texttd">Osoby</div>
-                                                    <div>
-                                                        
-                                                    </div>
-                                                </div>
-                                            </td>
+                                        @*                                         <tr>
+                                        <td>
+                                        <div class="e-resource-row">
+                                        <div class="e-texttd">Osoby</div>
+                                        <div>
+
+                                        </div>
+                                        </div>
+                                        </td>
                                         </tr>
- *@                                        <tr>
+                                        *@
+                                        <tr>
                                             <td>
                                                 <div class="e-description-row">
                                                     <div class="e-texttd">Notatka</div>
@@ -492,7 +493,7 @@
                             </MenuItems>
                         </MenuItem>
                     </MenuItems>
-                    <MenuEvents TValue="MenuItem" OnOpen="OnOpen" ItemSelected="OnItemSelected"></MenuEvents>
+                    <MenuEvents TValue="MenuItem" OnOpen="OnOpen" ItemSelected="OnItemSelected" Opened="SetDisableState"></MenuEvents>
                 </SfContextMenu>
             </div>
         </div>

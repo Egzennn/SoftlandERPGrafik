@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components.Web;
+﻿using DocumentFormat.OpenXml.InkML;
+using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 using SoftlandERGrafik.Data.Entities.Forms;
 using SoftlandERPGrafik.Data.Entities.Forms.Data;
@@ -61,7 +62,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
         public string[] GroupData = new string[] { "Dzialy", "Osoby" };
         private DateTime SystemTime { get; set; } = DateTime.UtcNow.ToLocalTime();
         private DateTime SelectedDate { get; set; } = DateTime.UtcNow.ToLocalTime();
-        private bool disableState;
+        private bool disableState = false;
 
         protected override async Task OnInitializedAsync()
         {
@@ -74,6 +75,17 @@ namespace SoftlandERPGrafik.Web.Components.Pages
             this.Kierownik = await this.Kierownicy.GetAllAsync();
             var allStates = await this.StanVocabulary.GetAllAsync();
             this.ogolneStany = allStates.Where(s => (s as OgolneStan)?.Stan == "Aktywny").OrderBy(s => s?.Wartosc).Select(s => s?.Wartosc).ToList();
+        }
+
+        private void SetDisableState()
+        {
+            var priPraId = EventData?.PRI_PraId;
+            var isAuthorized = this.IsCurrentUserAuthorized(priPraId);
+            var dzlDzlId = this.EventData?.DZL_DzlId;
+            var isAuthorizedManager = this.DepartmentManagerCRUD();
+
+            this.disableState = !(priPraId != 0 && ((isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId))
+                || (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId))));
         }
 
         private string? GetADUserInfo(string pRI_Opis)
@@ -133,6 +145,7 @@ namespace SoftlandERPGrafik.Web.Components.Pages
         public async Task OnEventRendered(EventRenderedArgs<GrafikForm> args)
         {
             Dictionary<string, object> attributes = new Dictionary<string, object>();
+            DateTime endTime = args.Data.EndTime;
 
             string backgroundColor = args.Data.Color;
             string borderColor = "border-color: rgba(42, 65, 111, 0.2)";
@@ -140,6 +153,11 @@ namespace SoftlandERPGrafik.Web.Components.Pages
 
             attributes.Add("style", $"background:{backgroundColor}; border-color:{borderColor}; background-image:{backgroundImage}");
             args.Attributes = attributes;
+            if (endTime <= this.SystemTime)
+            {
+                args.Data.IsReadonly = true;
+                StateHasChanged();
+            }
         }
 
         // Wyszukiwarka
