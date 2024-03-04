@@ -1,8 +1,7 @@
-﻿using SoftlandERPGrafik.Data.Entities;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace SoftlandERGrafik.Data.Entities.Forms
+namespace SoftlandERPGrafik.Data.Entities.Forms
 {
     public class GrafikForm : BaseEntity
     {

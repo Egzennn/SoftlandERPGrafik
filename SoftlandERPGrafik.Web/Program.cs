@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Server.IISIntegration;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using Serilog;
-using SoftlandERGrafik.Data.Entities.Forms;
+using SoftlandERPGrafik.Data.Entities.Forms;
 using SoftlandERPGrafik.Core.Repositories;
 using SoftlandERPGrafik.Core.Repositories.Interfaces;
 using SoftlandERPGrafik.Data.Configurations;

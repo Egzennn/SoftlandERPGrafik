@@ -1,4 +1,4 @@
-﻿using SoftlandERGrafik.Data.Entities.Forms;
+﻿using SoftlandERPGrafik.Data.Entities.Forms;
 using SoftlandERPGrafik.Web.Components.Services;
 using Syncfusion.Blazor;
 using Syncfusion.Blazor.Data;

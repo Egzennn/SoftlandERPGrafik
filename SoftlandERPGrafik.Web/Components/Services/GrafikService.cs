@@ -1,7 +1,7 @@
 ﻿namespace SoftlandERPGrafik.Web.Components.Services
 {
     using Microsoft.EntityFrameworkCore;
-    using SoftlandERGrafik.Data.Entities.Forms;
+    using SoftlandERPGrafik.Data.Entities.Forms;
     using SoftlandERPGrafik.Core.Repositories.Interfaces;
     using SoftlandERPGrafik.Data.DB;
     using SoftlandERPGrafik.Data.Entities.Forms.Data;

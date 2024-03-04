@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SoftlandERGrafik.Data.Entities.Forms;
+using SoftlandERPGrafik.Data.Entities.Forms;
 using SoftlandERPGrafik.Data.Entities.Views;
 using SoftlandERPGrafik.Data.Entities.Vocabularies.Forms.Ogolne;
 
