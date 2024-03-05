@@ -1,54 +1,41 @@
 ﻿namespace SoftlandERPGrafik.Web.Components.Services
 {
-    using Microsoft.Extensions.Logging;
     using SoftlandERPGrafik.Core.Repositories.Interfaces;
     using SoftlandERPGrafik.Data.DB;
     using SoftlandERPGrafik.Data.Entities.Forms;
-    using SoftlandERPGrafik.Data.Entities.Forms.Data;
     using SoftlandERPGrafik.Data.Entities.Views;
     using SoftlandERPGrafik.Data.Entities.Vocabularies.Forms.Ogolne;
+    using Syncfusion.Blazor.Inputs;
 
-    public class GrafikService : BaseService
+    public class WnioskiService : BaseService
     {
-        private readonly IRepository<GrafikForm> grafikRepository;
+        private readonly IRepository<WnioskiForm> grafikRepository;
+        private readonly IRepository<OgolneWnioski> wnioskiRepository;
 
-        public GrafikService(IRepository<GrafikForm> grafikRepository, MainContext mainContext, IADRepository adRepository, ILogger<BaseService> logger, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
+        public WnioskiService(IRepository<WnioskiForm> grafikRepository, IRepository<OgolneWnioski> wnioskiRepository, MainContext mainContext, IADRepository adRepository, ILogger<BaseService> logger, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
             : base(mainContext, adRepository, logger, userDetailsService, lokalizacjeRepository, dzialyRepository, zrodloRepository, stanRepository, statusRepository)
         {
             this.grafikRepository = grafikRepository;
+            this.wnioskiRepository = wnioskiRepository;
         }
 
-        public async Task<List<OsobaData>> GetEmployeesAsync()
+        public async Task<IEnumerable<WnioskiForm>> Get(DateTime startDate, DateTime endDate)
         {
-            var employees = await this.zrodloRepository.GetAllAsync();
-
-            return employees.Select(zatrudniony => new OsobaData(zatrudniony)).OrderBy(dzial => dzial.DZL_Kod).ThenBy(osoba => osoba.Imie_Nazwisko).ToList();
-        }
-
-        public async Task<IEnumerable<ZatrudnieniDzialy>> GetDzialyAsync() => await this.dzialyRepository.GetAllAsync();
-
-        public async Task<IEnumerable<OrganizacjaLokalizacje>> GetLocalizationAsync() => await this.lokalizacjeRepository.GetAllAsync();
-
-        public async Task<IEnumerable<GrafikForm>> Get(DateTime startDate, DateTime endDate)
-        {
-            //IEnumerable<GrafikForm> grafikForms = this.mainContext.GrafikForms.Where(e => e.StartTime >= startDate && e.EndTime <= endDate);
-            //IEnumerable<GrafikForm> grafikForms = this.mainContext.GrafikForms.Where(e => e.Id == new Guid("11b0f9d2-cef5-430f-a4d7-a26ce5e6ec9b"));
-
-            var grafikForms = await this.grafikRepository.GetAllAsync();
-            IEnumerable<GrafikForm> grafik = grafikForms.Where(e => e.StartTime >= startDate && e.EndTime <= endDate);
+            IEnumerable<WnioskiForm> grafikForms = this.mainContext.WnioskiForms.Where(e => e.StartTime >= startDate && e.EndTime <= endDate);
+            //IEnumerable<WnioskiForm> grafikForms = this.mainContext.GrafikForms.Where(e => e.Id == new Guid("11b0f9d2-cef5-430f-a4d7-a26ce5e6ec9b"));
 
             DateTime selectedDate = DateTime.UtcNow.ToLocalTime();
 
-            List<GrafikForm> eventData = new List<GrafikForm>();
+            List<WnioskiForm> eventData = new List<WnioskiForm>();
 
-            foreach (var grafikForm in grafik)
+            foreach (var grafikForm in grafikForms)
             {
-                eventData.Add(new GrafikForm
+                eventData.Add(new WnioskiForm
                 {
                     Id = grafikForm.Id,
                     StartTime = grafikForm.StartTime,
                     EndTime = grafikForm.EndTime,
-                    LocationId = grafikForm.LocationId,
+                    RequestId = grafikForm.RequestId,
                     Description = grafikForm.Description,
                     IsAllDay = grafikForm.IsAllDay,
                     PRI_PraId = grafikForm.PRI_PraId,
@@ -56,6 +43,7 @@
                     RecurrenceID = grafikForm.RecurrenceID,
                     RecurrenceRule = grafikForm.RecurrenceRule,
                     RecurrenceException = grafikForm.RecurrenceException,
+                    //IsReadonly = true,
                     Stan = grafikForm.Stan,
                     Status = grafikForm.Status,
                     CreatedBy = grafikForm.CreatedBy,
@@ -67,9 +55,9 @@
             return eventData;
         }
 
-        public async Task Insert(GrafikForm appointment)
+        public async Task Insert(WnioskiForm appointment)
         {
-            var app = new GrafikForm();
+            var app = new WnioskiForm();
             var userDetails = await this.userDetailsService.GetUserAllDetailsAsync();
 
             app.StartTime = appointment.StartTime;
@@ -77,7 +65,10 @@
             app.PRI_PraId = appointment.PRI_PraId;
             app.DZL_DzlId = appointment.DZL_DzlId;
             app.IsAllDay = appointment.IsAllDay;
-            app.LocationId = appointment.LocationId;
+            app.RequestId = appointment.RequestId;
+            app.Description = appointment.Description;
+            app.IDD = appointment.IDD;
+            app.IDS = appointment.IDS;
             app.Description = appointment.Description;
             app.RecurrenceRule = appointment.RecurrenceRule;
             app.RecurrenceID = appointment.RecurrenceID;
@@ -88,7 +79,7 @@
             await this.grafikRepository.InsertAsync(app);
         }
 
-        public async Task Update(GrafikForm appointment)
+        public async Task Update(WnioskiForm appointment)
         {
             var app = await this.grafikRepository.GetByIdAsync(appointment.Id);
             var userDetails = await userDetailsService.GetUserAllDetailsAsync();
@@ -100,7 +91,7 @@
                 app.PRI_PraId = appointment.PRI_PraId;
                 app.DZL_DzlId = appointment.DZL_DzlId;
                 app.IsAllDay = appointment.IsAllDay;
-                app.LocationId = appointment.LocationId;
+                app.RequestId = appointment.RequestId;
                 app.Description = string.IsNullOrWhiteSpace(appointment.Description) ? null : appointment.Description;
                 app.RecurrenceRule = appointment.RecurrenceRule;
                 app.RecurrenceID = appointment.RecurrenceID;
@@ -116,6 +107,15 @@
         public async Task Delete(Guid appointmentId)
         {
             await this.grafikRepository.DeleteAsync(appointmentId);
+        }
+
+        public async Task<IEnumerable<OgolneWnioski>> GetWnioskiAsync()
+        {
+            var wnioski = await this.wnioskiRepository.GetAllAsync();
+
+            var wnioskiOrder = wnioski.OrderBy(s => s?.Wartosc);
+
+            return wnioskiOrder;
         }
     }
 }

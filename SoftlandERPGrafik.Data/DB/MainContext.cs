@@ -14,7 +14,13 @@ namespace SoftlandERPGrafik.Data.DB
 
         public DbSet<GrafikForm> GrafikForms { get; set; }
 
+        public DbSet<WnioskiForm> WnioskiForms { get; set; }
+
         public DbSet<OgolneStan> OgolneStanVocabulary { get; set; }
+
+        public DbSet<OgolneStatus> OgolneStatusVocabulary { get; set; }
+
+        public DbSet<OgolneWnioski> OgolneWnioskiVocabulary { get; set; }
 
         public DbSet<OrganizacjaLokalizacje> OrganizacjaLokalizacjeVocabulary { get; set; }
 

@@ -38,10 +38,15 @@ builder.Services.AddSyncfusionBlazor();
 
 builder.Services.AddScoped<UserDetailsService>();
 builder.Services.AddScoped<GrafikService>();
+builder.Services.AddScoped<WnioskiService>();
 builder.Services.AddScoped<GrafikAdaptor>();
+builder.Services.AddScoped<WnioskiAdaptor>();
 
-builder.Services.AddTransient<IRepository<OgolneStan>, Repository<OgolneStan>>();
 builder.Services.AddTransient<IRepository<GrafikForm>, Repository<GrafikForm>>();
+builder.Services.AddTransient<IRepository<WnioskiForm>, Repository<WnioskiForm>>();
+builder.Services.AddTransient<IRepository<OgolneStan>, Repository<OgolneStan>>();
+builder.Services.AddTransient<IRepository<OgolneStatus>, Repository<OgolneStatus>>();
+builder.Services.AddTransient<IRepository<OgolneWnioski>, Repository<OgolneWnioski>>();
 builder.Services.AddTransient<IADRepository, ADRepository>();
 
 builder.Services.AddMudServices();

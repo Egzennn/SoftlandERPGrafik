@@ -16,10 +16,9 @@
     using Syncfusion.Blazor.Inputs;
     using Syncfusion.Blazor.Navigations;
     using Syncfusion.Blazor.Schedule;
-    using Syncfusion.Blazor.Schedule.Internal;
     using Timer = System.Timers.Timer;
 
-    public partial class Grafik
+    public partial class Wnioski
     {
         private IEnumerable<ADUser>? aduser;
         private UserPrincipal? userDetails;
@@ -31,18 +30,19 @@
         SfMultiSelect<int[], ZatrudnieniDzialy>? DepartamentRef;
         SfMultiSelect<int[], OsobaData>? ResourceRef;
         SfMultiSelect<int[], OrganizacjaLokalizacje>? LocationRef;
-        SfSchedule<GrafikForm>? ScheduleRef;
+        SfSchedule<WnioskiForm>? ScheduleRef;
         bool isCreated;
         private Timezone TimezoneData { get; set; } = new Timezone();
         private static IEnumerable<OsobaData>? Osoby;
         private static IEnumerable<ZatrudnieniDzialy>? Dzialy;
         private IEnumerable<Kierownicy>? Kierownik;
         private IEnumerable<OrganizacjaLokalizacje>? LocalizationData;
+        private IEnumerable<OgolneWnioski>? WnioskiData;
         private List<string>? ogolneStany;
-        private List<GrafikForm>? gridDataSource;
+        private List<WnioskiForm>? gridDataSource;
         private bool ShowSchedule { get; set; } = true;
         private string SearchValue { get; set; }
-        public GrafikForm EventData { get; set; }
+        public WnioskiForm EventData { get; set; }
         public CellClickEventArgs CellData { get; set; }
         private bool isCell { get; set; }
         private bool isEvent { get; set; }
@@ -65,13 +65,90 @@
         protected override async Task OnInitializedAsync()
         {
             this.aduser = this.ADRepository.GetAllADUsers();
-            Osoby = await this.GrafikService.GetEmployeesAsync();
-            Dzialy = await this.GrafikService.GetDzialyAsync();
+            Osoby = await this.WnioskiService.GetEmployeesAsync();
+            Dzialy = await this.WnioskiService.GetDzialyAsync();
             this.TimezoneData = new Timezone().GetSystemTimeZone();
-            this.LocalizationData = await this.GrafikService.GetLocalizationAsync();
+            this.LocalizationData = await this.WnioskiService.GetLocalizationAsync();
             this.userDetails = await this.UserDetailsService.GetUserAllDetailsAsync();
             this.Kierownik = await this.Kierownicy.GetAllAsync();
-            this.ogolneStany = await this.GrafikService.GetStanAsync();
+            this.ogolneStany = await this.WnioskiService.GetStanAsync();
+            this.WnioskiData = await this.WnioskiService.GetWnioskiAsync();
+        }
+
+        private async Task OnChangeUpload(UploadChangeEventArgs args)
+        {
+            try
+            {
+                var sciezka = @"\\10.10.0.2\Poland\Wnioski\";
+
+                foreach (var file in args.Files)
+                {
+                    var nazwaBezRozszerzenia = Path.GetFileNameWithoutExtension(file.FileInfo.Name);
+                    var rozszerzenie = Path.GetExtension(file.FileInfo.Name);
+                    var numer = 1;
+                    var nazwa = this.userDetails?.SamAccountName + "_" + nazwaBezRozszerzenia;
+
+                    if (File.Exists(Path.Combine(sciezka, nazwa + rozszerzenie)))
+                    {
+                        while (File.Exists(Path.Combine(sciezka, nazwa + "_" + numer + rozszerzenie)))
+                        {
+                            numer++;
+                        }
+
+                        nazwa = nazwa + "_" + numer;
+                    }
+
+                    var path = Path.Combine(sciezka, nazwa + rozszerzenie);
+
+                    using (FileStream filestream = new FileStream(path, FileMode.Create, FileAccess.Write))
+                    {
+                        await file.File.OpenReadStream(long.MaxValue).CopyToAsync(filestream);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
+        private void OnRemoveUpload(RemovingEventArgs args)
+        {
+            var sciezka = @"\\10.10.0.2\Poland\Wnioski\";
+
+            foreach (var removeFile in args.FilesData)
+            {
+                var nazwaBezRozszerzenia = Path.GetFileNameWithoutExtension(removeFile.Name);
+                var rozszerzenie = Path.GetExtension(removeFile.Name);
+                var nazwa = this.userDetails?.SamAccountName + "_" + nazwaBezRozszerzenia;
+
+                int najwyzszyNumer = 0;
+
+                for (int numer = 1; numer <= 999; numer++)
+                {
+                    var potencjalnaSciezka = Path.Combine(sciezka, $"{nazwa}_{numer}{rozszerzenie}");
+
+                    if (File.Exists(potencjalnaSciezka))
+                    {
+                        najwyzszyNumer = Math.Max(najwyzszyNumer, numer);
+                    }
+                }
+
+                var sciezkaPodstawowa = Path.Combine(sciezka, $"{nazwa}{rozszerzenie}");
+                var sciezkaZNumerem = Path.Combine(sciezka, $"{nazwa}_{najwyzszyNumer}{rozszerzenie}");
+
+                if (File.Exists(sciezkaPodstawowa) || (najwyzszyNumer > 0 && File.Exists(sciezkaZNumerem)))
+                {
+                    if (najwyzszyNumer > 0 && File.Exists(sciezkaZNumerem))
+                    {
+                        File.Delete(sciezkaZNumerem);
+                    }
+                    else if (File.Exists(sciezkaPodstawowa))
+                    {
+                        File.Delete(sciezkaPodstawowa);
+                    }
+                }
+            }
         }
 
         private void SetDisableState()
@@ -138,7 +215,7 @@
         }
 
         // Style
-        public async Task OnEventRendered(EventRenderedArgs<GrafikForm> args)
+        public async Task OnEventRendered(EventRenderedArgs<WnioskiForm> args)
         {
             Dictionary<string, object> attributes = new Dictionary<string, object>();
             DateTime endTime = args.Data.EndTime;
@@ -152,7 +229,7 @@
             if (endTime <= this.SystemTime)
             {
                 args.Data.IsReadonly = true;
-                attributes.Add("class", "e-read-only");
+                StateHasChanged();
             }
         }
 
@@ -183,9 +260,9 @@
             if (!string.IsNullOrEmpty(this.SearchValue) && this.ScheduleRef != null)
             {
                 Query query = new Query().Search(this.SearchValue, new List<string> { "Description" }, null, true, true);
-                List<GrafikForm> eventCollections = await this.ScheduleRef.GetEventsAsync(null, null, true);
-                object data = await new DataManager() { Json = eventCollections }.ExecuteQuery<GrafikForm>(query);
-                List<GrafikForm>? resultData = data as List<GrafikForm>;
+                List<WnioskiForm> eventCollections = await this.ScheduleRef.GetEventsAsync(null, null, true);
+                object data = await new DataManager() { Json = eventCollections }.ExecuteQuery<WnioskiForm>(query);
+                List<WnioskiForm>? resultData = data as List<WnioskiForm>;
                 switch (resultData?.Count)
                 {
                     case > 0:
@@ -247,7 +324,7 @@
             DateTime start = new DateTime(date.Year, date.Month, date.Day, DateTime.Now.Hour, 0, 0);
             var samaccountname = this.userDetails?.SamAccountName;
             OsobaData? user = this.GetOsobaBySamAccountName(samaccountname);
-            GrafikForm eventData = new GrafikForm
+            WnioskiForm eventData = new WnioskiForm
             {
                 Id = await this.ScheduleRef.GetMaxEventIdAsync<Guid>(),
                 StartTime = start,
@@ -265,7 +342,7 @@
             DateTime start = new DateTime(date.Year, date.Month, date.Day, DateTime.Now.Hour, 0, 0);
             var samaccountname = this.userDetails?.SamAccountName;
             OsobaData? user = this.GetOsobaBySamAccountName(samaccountname);
-            GrafikForm eventData = new GrafikForm
+            WnioskiForm eventData = new WnioskiForm
             {
                 Id = await this.ScheduleRef.GetMaxEventIdAsync<Guid>(),
                 StartTime = start,
@@ -278,22 +355,21 @@
             await this.ScheduleRef.OpenEditorAsync(eventData, CurrentAction.Add);
         }
 
-        private async void OnMoreDetailsClick(MouseEventArgs args, GrafikForm data, bool isEventData)
+        private async void OnMoreDetailsClick(MouseEventArgs args, WnioskiForm data, bool isEventData)
         {
             await this.ScheduleRef.CloseQuickInfoPopupAsync();
-            GrafikForm eventData = new GrafikForm
+            WnioskiForm eventData = new WnioskiForm
             {
                 Id = data.Id,
                 StartTime = data.StartTime,
                 EndTime = data.EndTime,
-                LocationId = data.LocationId,
+                RequestId = data.RequestId,
                 Description = data.Description,
+                IDD = data.IDD,
+                IDS = data.IDS,
                 IsAllDay = data.IsAllDay,
                 PRI_PraId = data.PRI_PraId,
                 DZL_DzlId = data.DZL_DzlId,
-                RecurrenceException = data.RecurrenceException,
-                RecurrenceID = data.RecurrenceID,
-                RecurrenceRule = data.RecurrenceRule,
                 Stan = data.Stan,
                 Status = data.Status,
                 CreatedBy = data.CreatedBy,
@@ -309,10 +385,10 @@
             }
         }
 
-        private async Task OnDelete(GrafikForm data)
+        private async Task OnDelete(WnioskiForm data)
         {
             await this.ScheduleRef.CloseQuickInfoPopupAsync();
-            await this.GrafikService.Delete(data.Id);
+            await this.WnioskiService.Delete(data.Id);
             this.Snackbar.Add("Usunięto wpis", Severity.Warning);
             await this.ScheduleRef.RefreshEventsAsync();
         }
@@ -346,7 +422,7 @@
             this.CurrentView = targetView;
         }
 
-        private string GetEventDetails(GrafikForm data)
+        private string GetEventDetails(WnioskiForm data)
         {
             return data.StartTime.ToString("dd MMMM yyyy", CultureInfo.CurrentCulture) + " (" + data.StartTime.ToString(TimeFormat, CultureInfo.CurrentCulture) + " - " + data.EndTime.ToString(TimeFormat, CultureInfo.CurrentCulture) + ")";
         }
@@ -408,13 +484,13 @@
         {
             if (args.Item.Text == "Excel")
             {
-                List<GrafikForm> exportDatas = new List<GrafikForm>();
-                List<GrafikForm> eventCollection = await this.ScheduleRef.GetEventsAsync();
+                List<WnioskiForm> exportDatas = new List<WnioskiForm>();
+                List<WnioskiForm> eventCollection = await this.ScheduleRef.GetEventsAsync();
                 List<Syncfusion.Blazor.Schedule.Resource> resourceCollection = this.ScheduleRef.GetResourceCollections();
                 List<OsobaData>? resourceData = resourceCollection[0].DataSource as List<OsobaData>;
                 foreach (var osoba in Osoby)
                 {
-                    List<GrafikForm> datas = eventCollection
+                    List<WnioskiForm> datas = eventCollection
                         .Where(e => e.PRI_PraId == osoba.PRI_PraId)
                         .ToList();
 
@@ -489,9 +565,9 @@
                     await this.ScheduleRef.OpenEditorAsync(activeCellsData, CurrentAction.Add);
                     break;
                 case "AddRecurrence":
-                    GrafikForm recurrenceEventData = null;
+                    WnioskiForm recurrenceEventData = null;
                     var resourceDetails = this.ScheduleRef.GetResourceByIndex(activeCellsData.GroupIndex);
-                    recurrenceEventData = new GrafikForm
+                    recurrenceEventData = new WnioskiForm
                     {
                         Id = await this.ScheduleRef.GetMaxEventIdAsync<Guid>(),
                         StartTime = activeCellsData.StartTime,
@@ -510,8 +586,8 @@
                     await this.ScheduleRef.OpenEditorAsync(this.EventData, CurrentAction.EditOccurrence);
                     break;
                 case "EditSeries":
-                    List<GrafikForm> events = await this.ScheduleRef.GetEventsAsync();
-                    this.EventData = (GrafikForm)events.Where(data => data.Id == this.EventData.RecurrenceID).FirstOrDefault();
+                    List<WnioskiForm> events = await this.ScheduleRef.GetEventsAsync();
+                    this.EventData = (WnioskiForm)events.Where(data => data.Id == this.EventData.RecurrenceID).FirstOrDefault();
                     await this.ScheduleRef.OpenEditorAsync(this.EventData, CurrentAction.EditSeries);
                     break;
                 case "Delete":
