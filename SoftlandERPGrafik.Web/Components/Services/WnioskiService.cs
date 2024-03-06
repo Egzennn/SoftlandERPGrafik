@@ -1,5 +1,6 @@
 ﻿namespace SoftlandERPGrafik.Web.Components.Services
 {
+    using Microsoft.EntityFrameworkCore;
     using SoftlandERPGrafik.Core.Repositories.Interfaces;
     using SoftlandERPGrafik.Data.DB;
     using SoftlandERPGrafik.Data.Entities.Forms;
@@ -21,10 +22,9 @@
 
         public async Task<IEnumerable<WnioskiForm>> Get(DateTime startDate, DateTime endDate)
         {
-            IEnumerable<WnioskiForm> grafikForms = this.mainContext.WnioskiForms.Where(e => e.StartTime >= startDate && e.EndTime <= endDate);
-            //IEnumerable<WnioskiForm> grafikForms = this.mainContext.GrafikForms.Where(e => e.Id == new Guid("11b0f9d2-cef5-430f-a4d7-a26ce5e6ec9b"));
-
-            DateTime selectedDate = DateTime.UtcNow.ToLocalTime();
+            var grafikForms = await this.mainContext.WnioskiForms
+                .Where(e => e.StartTime <= endDate && e.EndTime >= startDate)
+                .ToListAsync().ConfigureAwait(true);
 
             List<WnioskiForm> eventData = new List<WnioskiForm>();
 
@@ -37,13 +37,15 @@
                     EndTime = grafikForm.EndTime,
                     RequestId = grafikForm.RequestId,
                     Description = grafikForm.Description,
+                    IDD = grafikForm.IDD,
+                    IDS = grafikForm.IDS,
+                    IloscDni = grafikForm.IloscDni,
                     IsAllDay = grafikForm.IsAllDay,
                     PRI_PraId = grafikForm.PRI_PraId,
                     DZL_DzlId = grafikForm.DZL_DzlId,
                     RecurrenceID = grafikForm.RecurrenceID,
                     RecurrenceRule = grafikForm.RecurrenceRule,
                     RecurrenceException = grafikForm.RecurrenceException,
-                    //IsReadonly = true,
                     Stan = grafikForm.Stan,
                     Status = grafikForm.Status,
                     CreatedBy = grafikForm.CreatedBy,
@@ -69,6 +71,7 @@
             app.Description = appointment.Description;
             app.IDD = appointment.IDD;
             app.IDS = appointment.IDS;
+            app.IloscDni = (int)(appointment.EndTime - appointment.StartTime).TotalDays;
             app.Description = appointment.Description;
             app.RecurrenceRule = appointment.RecurrenceRule;
             app.RecurrenceID = appointment.RecurrenceID;
@@ -92,6 +95,9 @@
                 app.DZL_DzlId = appointment.DZL_DzlId;
                 app.IsAllDay = appointment.IsAllDay;
                 app.RequestId = appointment.RequestId;
+                app.IDD = appointment.IDD;
+                app.IDS = appointment.IDS;
+                app.IloscDni = (int)(appointment.EndTime - appointment.StartTime).TotalDays;
                 app.Description = string.IsNullOrWhiteSpace(appointment.Description) ? null : appointment.Description;
                 app.RecurrenceRule = appointment.RecurrenceRule;
                 app.RecurrenceID = appointment.RecurrenceID;

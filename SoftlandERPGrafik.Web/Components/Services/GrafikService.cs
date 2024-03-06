@@ -1,5 +1,6 @@
 ﻿namespace SoftlandERPGrafik.Web.Components.Services
 {
+    using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Logging;
     using SoftlandERPGrafik.Core.Repositories.Interfaces;
     using SoftlandERPGrafik.Data.DB;
@@ -31,17 +32,15 @@
 
         public async Task<IEnumerable<GrafikForm>> Get(DateTime startDate, DateTime endDate)
         {
-            //IEnumerable<GrafikForm> grafikForms = this.mainContext.GrafikForms.Where(e => e.StartTime >= startDate && e.EndTime <= endDate);
-            //IEnumerable<GrafikForm> grafikForms = this.mainContext.GrafikForms.Where(e => e.Id == new Guid("11b0f9d2-cef5-430f-a4d7-a26ce5e6ec9b"));
-
-            var grafikForms = await this.grafikRepository.GetAllAsync();
-            IEnumerable<GrafikForm> grafik = grafikForms.Where(e => e.StartTime >= startDate && e.EndTime <= endDate);
+            var grafikForms = await this.mainContext.GrafikForms
+            .Where(e => e.StartTime <= endDate && e.EndTime >= startDate)
+            .ToListAsync().ConfigureAwait(true);
 
             DateTime selectedDate = DateTime.UtcNow.ToLocalTime();
 
             List<GrafikForm> eventData = new List<GrafikForm>();
 
-            foreach (var grafikForm in grafik)
+            foreach (var grafikForm in grafikForms)
             {
                 eventData.Add(new GrafikForm
                 {

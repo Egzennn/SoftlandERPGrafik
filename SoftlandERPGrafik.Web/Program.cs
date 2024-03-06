@@ -16,6 +16,7 @@ using SoftlandERPGrafik.Web.Components.Adaptor;
 using SoftlandERPGrafik.Web.Components.Services;
 using Syncfusion.Blazor;
 using System.Globalization;
+using SoftlandERPGrafik.Web.Components.Pages;
 
 var builder = WebApplication.CreateBuilder(args);
 

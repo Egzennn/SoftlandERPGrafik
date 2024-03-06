@@ -56,6 +56,7 @@
         private bool isQuickInfoCreated { get; set; } = false;
         private View CurrentView { get; set; } = View.TimelineMonth;
         private string TimeFormat { get; set; } = "HH:mm";
+        private string DateFormat { get; set; } = "yyyy-MM-dd";
         private bool IsSettingsVisible { get; set; } = false;
         public string[] GroupData = new string[] { "Dzialy", "Osoby" };
         private DateTime SystemTime { get; set; } = DateTime.UtcNow.ToLocalTime();
@@ -68,7 +69,6 @@
             Osoby = await this.WnioskiService.GetEmployeesAsync();
             Dzialy = await this.WnioskiService.GetDzialyAsync();
             this.TimezoneData = new Timezone().GetSystemTimeZone();
-            this.LocalizationData = await this.WnioskiService.GetLocalizationAsync();
             this.userDetails = await this.UserDetailsService.GetUserAllDetailsAsync();
             this.Kierownik = await this.Kierownicy.GetAllAsync();
             this.ogolneStany = await this.WnioskiService.GetStanAsync();
@@ -250,37 +250,6 @@
             return this.GetDataById(id, Osoby, d => d.PRI_PraId, () => new OsobaData(new ZatrudnieniZrodlo()));
         }
 
-        private OrganizacjaLokalizacje GetLocationDataByLokId(int? id)
-        {
-            return this.GetDataById(id, this.LocalizationData, d => d.Lok_LokId, () => new OrganizacjaLokalizacje());
-        }
-
-        public async Task OnEventSearch()
-        {
-            if (!string.IsNullOrEmpty(this.SearchValue) && this.ScheduleRef != null)
-            {
-                Query query = new Query().Search(this.SearchValue, new List<string> { "Description" }, null, true, true);
-                List<WnioskiForm> eventCollections = await this.ScheduleRef.GetEventsAsync(null, null, true);
-                object data = await new DataManager() { Json = eventCollections }.ExecuteQuery<WnioskiForm>(query);
-                List<WnioskiForm>? resultData = data as List<WnioskiForm>;
-                switch (resultData?.Count)
-                {
-                    case > 0:
-                        this.ShowSchedule = false;
-                        this.gridDataSource = resultData;
-                        break;
-                    default:
-                        this.ShowSchedule = true;
-                        this.Snackbar.Add("Brak wyników wyszukiwania", Severity.Error);
-                        break;
-                }
-            }
-            else
-            {
-                this.ShowSchedule = true;
-            }
-        }
-
         public void OnMultiSelectChange(Syncfusion.Blazor.DropDowns.MultiSelectChangeEventArgs<int[]> args, string field)
         {
             WhereFilter predicate;
@@ -332,25 +301,6 @@
                 IsAllDay = false,
                 PRI_PraId = user.PRI_PraId,
                 DZL_DzlId = user.DZL_DzlId,
-            };
-            await this.ScheduleRef.OpenEditorAsync(eventData, CurrentAction.Add);
-        }
-
-        private async void OnNewRecurringEventAdd()
-        {
-            DateTime date = this.ScheduleRef.SelectedDate;
-            DateTime start = new DateTime(date.Year, date.Month, date.Day, DateTime.Now.Hour, 0, 0);
-            var samaccountname = this.userDetails?.SamAccountName;
-            OsobaData? user = this.GetOsobaBySamAccountName(samaccountname);
-            WnioskiForm eventData = new WnioskiForm
-            {
-                Id = await this.ScheduleRef.GetMaxEventIdAsync<Guid>(),
-                StartTime = start,
-                EndTime = start.AddHours(1),
-                IsAllDay = false,
-                PRI_PraId = user.PRI_PraId,
-                DZL_DzlId = user.DZL_DzlId,
-                RecurrenceRule = "FREQ=DAILY;INTERVAL=1;",
             };
             await this.ScheduleRef.OpenEditorAsync(eventData, CurrentAction.Add);
         }
@@ -424,7 +374,7 @@
 
         private string GetEventDetails(WnioskiForm data)
         {
-            return data.StartTime.ToString("dd MMMM yyyy", CultureInfo.CurrentCulture) + " (" + data.StartTime.ToString(TimeFormat, CultureInfo.CurrentCulture) + " - " + data.EndTime.ToString(TimeFormat, CultureInfo.CurrentCulture) + ")";
+            return data.StartTime.ToString(this.DateFormat, CultureInfo.CurrentCulture) + " - " + data.EndTime.AddDays(-1).ToString(this.DateFormat, CultureInfo.CurrentCulture);
         }
 
         private async Task SetFocus()
@@ -564,40 +514,17 @@
                 case "Add":
                     await this.ScheduleRef.OpenEditorAsync(activeCellsData, CurrentAction.Add);
                     break;
-                case "AddRecurrence":
-                    WnioskiForm recurrenceEventData = null;
-                    var resourceDetails = this.ScheduleRef.GetResourceByIndex(activeCellsData.GroupIndex);
-                    recurrenceEventData = new WnioskiForm
-                    {
-                        Id = await this.ScheduleRef.GetMaxEventIdAsync<Guid>(),
-                        StartTime = activeCellsData.StartTime,
-                        EndTime = activeCellsData.EndTime,
-                        IsAllDay = false,
-                        PRI_PraId = resourceDetails.GroupData.PRI_PraId,
-                        DZL_DzlId = resourceDetails.GroupData.DZL_DzlId,
-                        RecurrenceRule = "FREQ=DAILY;INTERVAL=1;",
-                    };
-                    await this.ScheduleRef.OpenEditorAsync(recurrenceEventData, CurrentAction.Add);
-                    break;
                 case "Save":
                     await this.ScheduleRef.OpenEditorAsync(this.EventData, CurrentAction.Save);
                     break;
                 case "EditOccurrence":
                     await this.ScheduleRef.OpenEditorAsync(this.EventData, CurrentAction.EditOccurrence);
                     break;
-                case "EditSeries":
-                    List<WnioskiForm> events = await this.ScheduleRef.GetEventsAsync();
-                    this.EventData = (WnioskiForm)events.Where(data => data.Id == this.EventData.RecurrenceID).FirstOrDefault();
-                    await this.ScheduleRef.OpenEditorAsync(this.EventData, CurrentAction.EditSeries);
-                    break;
                 case "Delete":
                     await this.ScheduleRef.DeleteEventAsync(this.EventData);
                     break;
                 case "DeleteOccurrence":
                     await this.ScheduleRef.DeleteEventAsync(this.EventData, CurrentAction.DeleteOccurrence);
-                    break;
-                case "DeleteSeries":
-                    await this.ScheduleRef.DeleteEventAsync(this.EventData, CurrentAction.DeleteSeries);
                     break;
             }
         }

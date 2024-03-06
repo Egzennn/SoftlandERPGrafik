@@ -19,6 +19,6 @@ namespace SoftlandERPGrafik.Data.Entities.Forms
         [Required(ErrorMessage = "IDD jest wymagany")]
         public string? IDD { get; set; }
 
-        public string? NazwaPlikuWniosku { get; set; }
+        public int? IloscDni { get; set; }
     }
 }
