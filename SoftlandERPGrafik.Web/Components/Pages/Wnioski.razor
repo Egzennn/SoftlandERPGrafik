@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@page "/wnioski"
 @inject Microsoft.AspNetCore.Components.NavigationManager UriHelper
 @inject WnioskiService WnioskiService
 @inject IRepository<OgolneStan> StanVocabulary
@@ -240,11 +240,11 @@
 
                                         @if (startTimeDate.HasValue && startTimeDate.Value >= todayDate)
                                         {
-                                            <SfButton Content="Dodaj grafik" OnClick="@(e => OnMoreDetailsClick(e, Data, false))"></SfButton>
+                                            <SfButton Content="Dodaj wniosek" OnClick="@(e => OnMoreDetailsClick(e, Data, false))"></SfButton>
                                         }
                                         else
                                         {
-                                            <SfButton Content="Dodaj grafik" OnClick="@(e => OnMoreDetailsClick(e, Data, false))"
+                                            <SfButton Content="Dodaj wniosek" OnClick="@(e => OnMoreDetailsClick(e, Data, false))"
                                                       disabled></SfButton>
                                         }
                                     }
@@ -301,11 +301,11 @@
                             }
                             @if (Data.CreatedBy == null)
                             {
-                                <div>Dodaj grafik pracy dla @osobaData.Imie_Nazwisko</div>
+                                <div>Dodaj wniosek pracy dla @osobaData.Imie_Nazwisko</div>
                             }
                             else
                             {
-                                <div>Edytuj grafik pracy dla @osobaData.Imie_Nazwisko</div>
+                                <div>Edytuj wniosek pracy dla @osobaData.Imie_Nazwisko</div>
                             }
                         </EditorHeaderTemplate>
                         <EditorTemplate>
@@ -385,7 +385,7 @@
                                                 <div class="e-form-row">
                                                     <div class="e-texttd">Wniosek</div>
                                                     <div>
-                                                        <SfUploader AllowMultiple="false" AutoUpload="true">
+                                                        <SfUploader AllowMultiple="false" AutoUpload="true" AllowedExtensions=".doc, .docx, .pdf">
                                                             <UploaderEvents ValueChange="@OnChangeUpload" OnRemove="@OnRemoveUpload"></UploaderEvents>
                                                         </SfUploader>
                                                     </div>
@@ -413,45 +413,6 @@
                         </EditorTemplate>
                     </ScheduleTemplates>
                 </SfSchedule>
-                @if (!ShowSchedule)
-                {
-                    <MudDataGrid Items="@gridDataSource" Dense Filterable="true" FilterMode="DataGridFilterMode.Simple">
-                        <Columns>
-                            <TemplateColumn Title="Dział">
-                                <CellTemplate>
-                                    @{
-                                        var cellContext = (CellContext<WnioskiForm>)context;
-                                        var dzialData = GetDzialDataByDzlId(cellContext.Item.DZL_DzlId);
-                                    }
-                                    @dzialData.DZL_Kod
-                                </CellTemplate>
-                            </TemplateColumn>
-                            <TemplateColumn Title="Imie i Nazwisko">
-                                <CellTemplate>
-                                    @{
-                                        var cellContext = (CellContext<WnioskiForm>)context;
-                                        var osobaData = GetOsobaDataByDzlId(cellContext.Item.PRI_PraId);
-                                    }
-                                    @osobaData.Imie_Nazwisko
-                                </CellTemplate>
-                            </TemplateColumn>
-                            <TemplateColumn Title="Lokalizacja">
-                                <CellTemplate>
-                                    @{
-                                        var cellContext = (CellContext<WnioskiForm>)context;
-                                        // var osobaData = GetLocationDataByLokId(cellContext.Item.LocationId);
-                                    }
-                                    @* @osobaData.Wartosc *@
-                                </CellTemplate>
-                            </TemplateColumn>
-                            <PropertyColumn Property="x =>x.Description" Title="Notatka"></PropertyColumn>
-                            <PropertyColumn Property="x =>x.StartTime" Title="Początek" Format="g"></PropertyColumn>
-                            <PropertyColumn Property="x =>x.EndTime" Title="Koniec" Format="g"></PropertyColumn>
-
-                        </Columns>
-                    </MudDataGrid>
-
-                }
                 <SfContextMenu TValue="MenuItem" CssClass="schedule-context-menu" Target=".e-schedule">
                     <MenuItems>
                         <MenuItem Text="Nowe wydarzenie" IconCss="e-icons e-plus" Id="Add" Hidden="@isCell" Disabled="@disableState"></MenuItem>
@@ -479,12 +440,6 @@
                     <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="ResourceRef" TValue="int[]" TItem="OsobaData" DataSource="@Osoby" Placeholder="Imię i nazwisko" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
                         <MultiSelectFieldSettings GroupBy="DZL_Kod" Text="Imie_Nazwisko" Value="PRI_PraId"></MultiSelectFieldSettings>
                         <MultiSelectEvents TValue="int[]" TItem="OsobaData" ValueChange="@(args => OnMultiSelectChange(args, "PRI_PraId"))"></MultiSelectEvents>
-                    </SfMultiSelect>
-                </div>
-                <div class="col-row">
-                    <SfMultiSelect @ref="LocationRef" TValue="int[]" TItem="OrganizacjaLokalizacje" DataSource="@LocalizationData" Placeholder="Lokalizacja" AllowFiltering="true">
-                        <MultiSelectFieldSettings Text="Wartosc" Value="Lok_LokId"></MultiSelectFieldSettings>
-                        <MultiSelectEvents TValue="int[]" TItem="OrganizacjaLokalizacje" ValueChange="@(args => OnMultiSelectChange(args, "LocationId"))"></MultiSelectEvents>
                     </SfMultiSelect>
                 </div>
             </div>

@@ -37,7 +37,7 @@
         private static IEnumerable<ZatrudnieniDzialy>? Dzialy;
         private IEnumerable<Kierownicy>? Kierownik;
         private IEnumerable<OrganizacjaLokalizacje>? LocalizationData;
-        private IEnumerable<OgolneWnioski>? WnioskiData;
+        private static IEnumerable<OgolneWnioski>? WnioskiData;
         private List<string>? ogolneStany;
         private List<WnioskiForm>? gridDataSource;
         private bool ShowSchedule { get; set; } = true;
@@ -72,7 +72,7 @@
             this.userDetails = await this.UserDetailsService.GetUserAllDetailsAsync();
             this.Kierownik = await this.Kierownicy.GetAllAsync();
             this.ogolneStany = await this.WnioskiService.GetStanAsync();
-            this.WnioskiData = await this.WnioskiService.GetWnioskiAsync();
+            WnioskiData = await this.WnioskiService.GetWnioskiAsync();
         }
 
         private async Task OnChangeUpload(UploadChangeEventArgs args)
@@ -229,7 +229,7 @@
             if (endTime <= this.SystemTime)
             {
                 args.Data.IsReadonly = true;
-                StateHasChanged();
+                this.StateHasChanged();
             }
         }
 
@@ -238,11 +238,6 @@
         {
             var item = data.FirstOrDefault(d => idSelector(d) == id);
             return item ?? createDefault();
-        }
-
-        private ZatrudnieniDzialy GetDzialDataByDzlId(int id)
-        {
-            return this.GetDataById(id, Dzialy, d => d.DZL_DzlId, () => new ZatrudnieniDzialy());
         }
 
         private OsobaData GetOsobaDataByDzlId(int id)
