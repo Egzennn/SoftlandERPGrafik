@@ -239,6 +239,10 @@
                                 var startTime = Data?.StartTime;
                                 var disableStateReadOnly = false;
                                 var disableStateAdd = false;
+                                if (SignedInGroup.Contains("S_ADM_IT"))
+                                {
+                                    isAuthorizedManager = Data?.DZL_DzlId;
+                                }
                             }
                             <div class="cell-footer">
                                 @if (priPraId != 0 && ((isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))
