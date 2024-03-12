@@ -32,7 +32,15 @@ namespace SoftlandERPGrafik.Data.Entities
             {
                 if (!this.colorHasBeenSet)
                 {
-                    this.color = this.Description == null ? "#69DC68" : "#FFE376";
+                    if (this.Stan == "Odrzucenie" || this.Status == "Odrzucenie")
+                    {
+                        this.color = "#ff0303";
+                    }
+                    else
+                    {
+                        this.color = this.Description == null ? "#69DC68" : "#FFE376";
+                    }
+
                     this.colorHasBeenSet = true;
                 }
 
@@ -50,7 +58,7 @@ namespace SoftlandERPGrafik.Data.Entities
         {
             get
             {
-                this.style = this.Stan == "Plan" ? "repeating-linear-gradient(-45deg, rgba(74, 142, 214, 0.12), rgba(74, 142, 214, 0.12) 10px, rgba(249, 250, 252, 0.3) 10px, rgba(249, 250, 252, 0.3) 20px);" : "";
+                this.style = (this.Stan == "Plan" || this.Status == "Plan") ? "repeating-linear-gradient(-45deg, rgba(74, 142, 214, 0.12), rgba(74, 142, 214, 0.12) 10px, rgba(249, 250, 252, 0.3) 10px, rgba(249, 250, 252, 0.3) 20px);" : "";
                 return this.style;
             }
 

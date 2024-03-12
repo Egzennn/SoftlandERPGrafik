@@ -107,6 +107,7 @@
                 app.Updated = DateTime.Now;
                 app.UpdatedBy = userDetails?.SamAccountName;
                 app.Stan = appointment.Stan;
+                app.Status = appointment.Status;
 
                 await this.grafikRepository.UpdateAsync(app);
             }

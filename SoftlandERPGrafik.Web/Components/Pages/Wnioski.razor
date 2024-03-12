@@ -228,6 +228,12 @@
                                 var dzlDzlId = Data?.DZL_DzlId;
                                 var isAuthorizedManager = DepartmentManagerCRUD();
                                 var startTime = Data?.StartTime;
+                                var disableStateReadOnly = false;
+                                var disableStateAdd = false;
+                                if (SignedInGroup.Contains("S_ADM_IT") || SignedInGroup.Contains("S_ADM_KADRY"))
+                                {
+                                    isAuthorizedManager = Data?.DZL_DzlId;
+                                }
                             }
                             <div class="cell-footer">
                                 @if (priPraId != 0 && ((isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))
@@ -238,27 +244,19 @@
                                         var todayDate = DateTime.Now.Date;
                                         var startTimeDate = startTime?.Date;
 
-                                        @if (startTimeDate.HasValue && startTimeDate.Value >= todayDate)
-                                        {
-                                            <SfButton Content="Dodaj wniosek" OnClick="@(e => OnMoreDetailsClick(e, Data, false))"></SfButton>
-                                        }
-                                        else
-                                        {
-                                            <SfButton Content="Dodaj wniosek" OnClick="@(e => OnMoreDetailsClick(e, Data, false))"
-                                                      disabled></SfButton>
-                                        }
+                                        disableStateAdd = !(startTimeDate.HasValue && startTimeDate.Value >= todayDate);
+
+                                        <SfButton Content="Dodaj grafik" OnClick="@(e => OnMoreDetailsClick(e, Data, false))" Disabled="@disableStateAdd" />
                                     }
                                     else
                                     {
+                                        disableStateReadOnly = isReadOnly ? true : false;
+
                                         <SfButton CssClass="e-event-edit" Content="Edycja"
-                                                  OnClick="@(e => OnMoreDetailsClick(e, Data, true))"
-                                                  disabled="@(isReadOnly ? true : false)">
-                                        </SfButton>
+                                                  OnClick="@(e => OnMoreDetailsClick(e, Data, true))" Disabled="@disableStateReadOnly" />
                                         @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
                                         {
-                                            <SfButton CssClass="e-event-delete" Content="Usuń" OnClick="@(e => OnDelete(Data))"
-                                                      disabled="@(isReadOnly ? true : false)">
-                                            </SfButton>
+                                            <SfButton CssClass="e-event-delete" Content="Usuń" OnClick="@(e => OnDelete(Data))" Disabled="@disableStateReadOnly" />
                                         }
                                     }
                                 }
@@ -312,6 +310,20 @@
                             @{
                                 var Data = (context as WnioskiForm);
                                 var isAuthorizedManager = DepartmentManagerCRUD();
+                                bool isManager = this.Kierownik.Any(o => o.PRI_Opis == this.userDetails?.SamAccountName);
+                                if (SignedInGroup.Contains("S_ADM_IT"))
+                                {
+                                    enableStateA = true;
+                                    enableStateB = true;
+                                }
+                                else if (SignedInGroup.Contains("S_ADM_KADRY"))
+                                {
+                                    enableStateB = true;
+                                }
+                                else if (isManager)
+                                {
+                                    enableStateA = true;
+                                }
                             }
                             <div class="e-dialog-parent">
                                 <table class="custom-event-editor" width="100%" cellpadding="5" style="padding-bottom: 14px">
@@ -392,14 +404,22 @@
                                                 </div>
                                             </td>
                                         </tr>
-                                        @if (Data.Stan != null && isAuthorizedManager.HasValue)
+                                        @if (Data.Stan != null)
                                         {
                                             <tr>
                                                 <td>
-                                                    <div class="e-form-row">
-                                                        <div class="e-texttd">Stan</div>
+                                                    <div class="e-location-row">
+                                                        <div class="e-texttd">Status wniosku Kierownika</div>
                                                         <div>
-                                                            <SfDropDownList ID="StanEventType" DataSource="@ogolneStany" Placeholder="Stan" @bind-Value="@(Data.Stan)">
+                                                            <SfDropDownList ID="StanEventType" DataSource="@ogolneStatusy" @bind-Value="@(Data.Stan)" Enabled="@enableStateA">
+                                                                <DropDownListFieldSettings Value="Wartosc" Text="Wartosc"></DropDownListFieldSettings>
+                                                            </SfDropDownList>
+                                                        </div>
+                                                    </div>
+                                                    <div class="e-location-row">
+                                                        <div class="e-texttd">Status wniosku ASE</div>
+                                                        <div>
+                                                            <SfDropDownList ID="StatusEventType" DataSource="@ogolneStatusy" @bind-Value="@(Data.Status)" Enabled="@enableStateB">
                                                                 <DropDownListFieldSettings Value="Wartosc" Text="Wartosc"></DropDownListFieldSettings>
                                                             </SfDropDownList>
                                                         </div>

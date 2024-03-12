@@ -9,14 +9,12 @@
     using SoftlandERPGrafik.Data.Entities.Forms.Data;
     using SoftlandERPGrafik.Data.Entities.Staff.AD;
     using SoftlandERPGrafik.Data.Entities.Views;
-    using SoftlandERPGrafik.Data.Entities.Vocabularies.Forms.Ogolne;
     using Syncfusion.Blazor;
     using Syncfusion.Blazor.Data;
     using Syncfusion.Blazor.DropDowns;
     using Syncfusion.Blazor.Inputs;
     using Syncfusion.Blazor.Navigations;
     using Syncfusion.Blazor.Schedule;
-    using Syncfusion.Blazor.Schedule.Internal;
     using Timer = System.Timers.Timer;
 
     public partial class Grafik
@@ -38,7 +36,7 @@
         private static IEnumerable<ZatrudnieniDzialy>? Dzialy;
         private IEnumerable<Kierownicy>? Kierownik;
         private IEnumerable<OrganizacjaLokalizacje>? LocalizationData;
-        private List<string>? ogolneStany;
+        private List<string?> ogolneStatusy;
         private List<GrafikForm>? gridDataSource;
         private bool ShowSchedule { get; set; } = true;
         private string SearchValue { get; set; }
@@ -61,6 +59,8 @@
         private DateTime SystemTime { get; set; } = DateTime.UtcNow.ToLocalTime();
         private DateTime SelectedDate { get; set; } = DateTime.UtcNow.ToLocalTime();
         private bool disableState = false;
+        private bool enableStateA = false;
+        private List<string> SignedInGroup;
 
         protected override async Task OnInitializedAsync()
         {
@@ -71,7 +71,8 @@
             this.LocalizationData = await this.GrafikService.GetLocalizationAsync();
             this.userDetails = await this.UserDetailsService.GetUserAllDetailsAsync();
             this.Kierownik = await this.Kierownicy.GetAllAsync();
-            this.ogolneStany = await this.GrafikService.GetStanAsync();
+            this.ogolneStatusy = await this.GrafikService.GetStatusAsync();
+            this.SignedInGroup = this.GrafikService.GetSignedInGroups(userDetails?.SamAccountName);
         }
 
         private void SetDisableState()
@@ -126,6 +127,16 @@
 
             return null;
         }
+
+        //private bool? HRCRUD()
+        //{
+
+        //}
+
+        //private bool? ITCRUD()
+        //{
+
+        //}
 
         private OsobaData? GetOsobaBySamAccountName(string samAccountName)
         {

@@ -78,6 +78,7 @@
             app.RecurrenceException = appointment.RecurrenceException;
             app.CreatedBy = userDetails?.SamAccountName;
             app.Stan = "Plan";
+            app.Status = "Plan";
 
             await this.grafikRepository.InsertAsync(app);
         }
@@ -105,6 +106,7 @@
                 app.Updated = DateTime.Now;
                 app.UpdatedBy = userDetails?.SamAccountName;
                 app.Stan = appointment.Stan;
+                app.Status = appointment.Status;
 
                 await this.grafikRepository.UpdateAsync(app);
             }

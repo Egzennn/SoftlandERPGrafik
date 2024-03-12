@@ -10,7 +10,6 @@
     using SoftlandERPGrafik.Data.Entities.Staff.AD;
     using SoftlandERPGrafik.Data.Entities.Views;
     using SoftlandERPGrafik.Data.Entities.Vocabularies.Forms.Ogolne;
-    using Syncfusion.Blazor;
     using Syncfusion.Blazor.Data;
     using Syncfusion.Blazor.DropDowns;
     using Syncfusion.Blazor.Inputs;
@@ -38,7 +37,7 @@
         private IEnumerable<Kierownicy>? Kierownik;
         private IEnumerable<OrganizacjaLokalizacje>? LocalizationData;
         private static IEnumerable<OgolneWnioski>? WnioskiData;
-        private List<string>? ogolneStany;
+        private List<string?> ogolneStatusy;
         private List<WnioskiForm>? gridDataSource;
         private bool ShowSchedule { get; set; } = true;
         private string SearchValue { get; set; }
@@ -62,6 +61,9 @@
         private DateTime SystemTime { get; set; } = DateTime.UtcNow.ToLocalTime();
         private DateTime SelectedDate { get; set; } = DateTime.UtcNow.ToLocalTime();
         private bool disableState = false;
+        private bool enableStateA = false;
+        private bool enableStateB = false;
+        private List<string> SignedInGroup;
 
         protected override async Task OnInitializedAsync()
         {
@@ -71,8 +73,9 @@
             this.TimezoneData = new Timezone().GetSystemTimeZone();
             this.userDetails = await this.UserDetailsService.GetUserAllDetailsAsync();
             this.Kierownik = await this.Kierownicy.GetAllAsync();
-            this.ogolneStany = await this.WnioskiService.GetStanAsync();
+            this.ogolneStatusy = await this.WnioskiService.GetStatusAsync();
             WnioskiData = await this.WnioskiService.GetWnioskiAsync();
+            this.SignedInGroup = this.WnioskiService.GetSignedInGroups(userDetails?.SamAccountName);
         }
 
         private async Task OnChangeUpload(UploadChangeEventArgs args)

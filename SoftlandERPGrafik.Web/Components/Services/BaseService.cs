@@ -49,7 +49,7 @@ namespace SoftlandERPGrafik.Web.Components.Services
                 return string.Empty;
             }
 
-            return adRepository.GetUserAcronym(username);
+            return this.adRepository.GetUserAcronym(username);
         }
 
         protected string GetSignedInFirstLastName(string? username)
@@ -59,7 +59,20 @@ namespace SoftlandERPGrafik.Web.Components.Services
                 return string.Empty;
             }
 
-            return adRepository.GetUserFirstLastName(username);
+            return this.adRepository.GetUserFirstLastName(username);
+        }
+
+        public List<string> GetSignedInGroups(string? login)
+        {
+            if (login == null)
+            {
+                return new List<string>();
+            }
+
+            List<string> groups = this.adRepository.GetAllADGroupsByUser(login);
+            var signedInGroups = groups.Where(group => group.StartsWith("S_")).ToList();
+
+            return signedInGroups;
         }
 
         public async Task<List<OsobaData>> GetEmployeesAsync()
@@ -73,7 +86,7 @@ namespace SoftlandERPGrafik.Web.Components.Services
 
         public async Task<IEnumerable<OrganizacjaLokalizacje>> GetLocalizationAsync() => await this.lokalizacjeRepository.GetAllAsync();
 
-        public async Task<List<string>> GetStanAsync()
+        public async Task<List<string?>> GetStanAsync()
         {
             var stany = await this.stanRepository.GetAllAsync();
 
@@ -87,7 +100,7 @@ namespace SoftlandERPGrafik.Web.Components.Services
             return ogolneStany;
         }
 
-        public async Task<List<string>> GetStatusAsync()
+        public async Task<List<string?>> GetStatusAsync()
         {
             var statusy = await this.statusRepository.GetAllAsync();
 
