@@ -33,7 +33,6 @@
         public async Task<IEnumerable<GrafikForm>> Get(DateTime startDate, DateTime endDate)
         {
             var grafikForms = await this.mainContext.GrafikForms
-            .Where(e => e.StartTime <= endDate && e.EndTime >= startDate)
             .ToListAsync().ConfigureAwait(true);
 
             DateTime selectedDate = DateTime.UtcNow.ToLocalTime();

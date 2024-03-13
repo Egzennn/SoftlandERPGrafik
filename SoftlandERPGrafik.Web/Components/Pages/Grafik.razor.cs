@@ -128,16 +128,6 @@
             return null;
         }
 
-        //private bool? HRCRUD()
-        //{
-
-        //}
-
-        //private bool? ITCRUD()
-        //{
-
-        //}
-
         private OsobaData? GetOsobaBySamAccountName(string samAccountName)
         {
             if (Osoby != null)
@@ -432,7 +422,7 @@
                     exportDatas.AddRange(datas);
                 }
 
-                ExportOptions Options = new ExportOptions()
+                ExportOptions options = new ExportOptions()
                 {
                     ExportType = ExcelFormat.Xlsx,
                     CustomData = exportDatas,
@@ -440,7 +430,7 @@
                     DateFormat = "MM.dd.yyyy HH:mm:ss",
                     FileName = "Grafik na dzień:" + DateTime.UtcNow.ToLocalTime(),
                 };
-                await this.ScheduleRef.ExportToExcelAsync(Options);
+                await this.ScheduleRef.ExportToExcelAsync(options);
             }
             else
             {
@@ -452,12 +442,12 @@
         {
             if (args.ParentItem == null)
             {
-                this.CellData = await ScheduleRef.GetTargetCellAsync((int)args.Left, (int)args.Top);
+                this.CellData = await this.ScheduleRef.GetTargetCellAsync((int)args.Left, (int)args.Top);
                 await this.ScheduleRef.CloseQuickInfoPopupAsync();
                 if (this.CellData == null)
                 {
                     this.EventData = await this.ScheduleRef.GetTargetEventAsync((int)args.Left, (int)args.Top);
-                    if (this.EventData.Id == null)
+                    if (this.EventData.Id == Guid.Empty)
                     {
                         args.Cancel = true;
                     }

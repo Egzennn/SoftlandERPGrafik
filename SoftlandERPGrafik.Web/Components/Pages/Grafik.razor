@@ -345,11 +345,11 @@
                                                     <div class="e-start-container">
                                                         @if (!Data.IsAllDay)
                                                         {
-                                                            <SfTimePicker @bind-Value="Data.StartTime"></SfTimePicker>
+                                                            <SfTimePicker @bind-Value="Data.StartTime" ValidateOnInput></SfTimePicker>
                                                         }
                                                         else
                                                         {
-                                                            <SfDatePicker @bind-Value="Data.StartTime"></SfDatePicker>
+                                                            <SfDatePicker @bind-Value="Data.StartTime" ValidateOnInput Min="@SystemTime"></SfDatePicker>
                                                         }
                                                     </div>
                                                     <span class="e-arrow-container">
@@ -360,11 +360,11 @@
                                                     <div class="e-end-container">
                                                         @if (!Data.IsAllDay)
                                                         {
-                                                            <SfTimePicker @bind-Value="Data.EndTime"></SfTimePicker>
+                                                            <SfTimePicker @bind-Value="Data.EndTime" ValidateOnInput Min="Data.StartTime"></SfTimePicker>
                                                         }
                                                         else
                                                         {
-                                                            <SfDatePicker @bind-Value="Data.EndTime"></SfDatePicker>
+                                                            <SfDatePicker @bind-Value="Data.EndTime" ValidateOnInput Min="Data.StartTime"></SfDatePicker>
                                                         }
                                                     </div>
                                                     <ValidationMessage For="()=>(Data.EndTime)" />

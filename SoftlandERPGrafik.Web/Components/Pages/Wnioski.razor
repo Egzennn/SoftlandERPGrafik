@@ -333,7 +333,7 @@
                                                 <div class="e-start-end-row">
                                                     <div class="e-texttd">Czas trwania</div>
                                                     <div class="e-start-container">
-                                                        <SfDatePicker @bind-Value="Data.StartTime"></SfDatePicker>
+                                                        <SfDatePicker @bind-Value="Data.StartTime" ValidateOnInput Min="@SystemTime"></SfDatePicker>
                                                     </div>
                                                     <span class="e-arrow-container">
                                                         <svg width="16" height="16" viewBox="0 0 32 32" fill="#7D90AB" xmlns="http://www.w3.org/2000/svg" class="css-f81u39">
@@ -341,7 +341,7 @@
                                                         </svg>
                                                     </span>
                                                     <div class="e-end-container">
-                                                        <SfDatePicker @bind-Value="Data.EndTime"></SfDatePicker>
+                                                        <SfDatePicker @bind-Value="Data.EndTime" ValidateOnInput Min="@Data.StartTime"></SfDatePicker>
                                                     </div>
                                                     <ValidationMessage For="()=>(Data.EndTime)" />
                                                 </div>
