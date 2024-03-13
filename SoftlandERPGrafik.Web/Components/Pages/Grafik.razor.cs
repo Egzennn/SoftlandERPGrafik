@@ -496,7 +496,7 @@
                     {
                         Id = await this.ScheduleRef.GetMaxEventIdAsync<Guid>(),
                         StartTime = activeCellsData.StartTime,
-                        EndTime = activeCellsData.EndTime,
+                        EndTime = activeCellsData.StartTime,
                         IsAllDay = false,
                         PRI_PraId = resourceDetails.GroupData.PRI_PraId,
                         DZL_DzlId = resourceDetails.GroupData.DZL_DzlId,
