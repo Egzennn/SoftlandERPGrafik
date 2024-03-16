@@ -72,6 +72,11 @@
 
             app.StartTime = appointment.StartTime;
             app.EndTime = appointment.EndTime;
+            if (appointment.RecurrenceRule != null && appointment.EndTime != appointment.StartTime)
+            {
+                app.EndTime = appointment.StartTime;
+            }
+
             app.PRI_PraId = appointment.PRI_PraId;
             app.DZL_DzlId = appointment.DZL_DzlId;
             app.IsAllDay = appointment.IsAllDay;
@@ -89,7 +94,7 @@
         public async Task Update(GrafikForm appointment)
         {
             var app = await this.grafikRepository.GetByIdAsync(appointment.Id);
-            var userDetails = await userDetailsService.GetUserAllDetailsAsync();
+            var userDetails = await this.userDetailsService.GetUserAllDetailsAsync();
 
             if (app != null)
             {

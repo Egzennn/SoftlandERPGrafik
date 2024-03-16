@@ -21,7 +21,7 @@
     {
         private IEnumerable<ADUser>? aduser;
         private UserPrincipal? userDetails;
-        private bool IsDzialyExpanded = true;
+        private bool IsDzialyExpanded = false;
         private Query DepartmanetQuery { get; set; } = new Query();
         private Query ResourceQuery { get; set; } = new Query();
         private Query LocalizationQuery { get; set; } = new Query();

@@ -117,7 +117,7 @@
                         </HeaderTooltipTemplate>
                     </ScheduleGroup>
                     <ScheduleResources>
-                        <ScheduleResource TValue="int" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Query="@DepartmanetQuery" Field="DZL_DzlId" Title="Dzialy" Name="Dzialy" TextField="DZL_Kod" IdField="DZL_DzlId" GroupIDField="DZL_ParentId"></ScheduleResource>
+                        <ScheduleResource TValue="int" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Query="@DepartmanetQuery" Field="DZL_DzlId" Title="Dzialy" Name="Dzialy" TextField="DZL_Kod" IdField="DZL_DzlId" GroupIDField="DZL_ParentId" ExpandedField="IsExpand"></ScheduleResource>
                         <ScheduleResource TValue="int" TItem="OsobaData" DataSource="@Osoby" Query="@ResourceQuery" Field="PRI_PraId" Title="Osoby" Name="Osoby" TextField="Imie_Nazwisko" IdField="PRI_PraId" GroupIDField="DZL_DzlId"></ScheduleResource>
                     </ScheduleResources>
                     <ScheduleTimeScale Enable="@EnableTimeScale" Interval="@SlotInterval" SlotCount="@SlotCount"></ScheduleTimeScale>

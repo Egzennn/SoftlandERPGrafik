@@ -116,7 +116,7 @@
                         </HeaderTooltipTemplate>
                     </ScheduleGroup>
                     <ScheduleResources>
-                        <ScheduleResource TValue="int" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Query="@DepartmanetQuery" Field="DZL_DzlId" Title="Dzialy" Name="Dzialy" TextField="DZL_Kod" IdField="DZL_DzlId" GroupIDField="DZL_ParentId"></ScheduleResource>
+                        <ScheduleResource TValue="int" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Query="@DepartmanetQuery" Field="DZL_DzlId" Title="Dzialy" Name="Dzialy" TextField="DZL_Kod" IdField="DZL_DzlId" GroupIDField="DZL_ParentId" ExpandedField="IsExpand"></ScheduleResource>
                         <ScheduleResource AllowMultiple="true" TValue="int[]" TItem="OsobaData" DataSource="@Osoby" Query="@ResourceQuery" Field="PRI_PraId" Title="Osoby" Name="Osoby" TextField="Imie_Nazwisko" IdField="PRI_PraId" GroupIDField="DZL_DzlId"></ScheduleResource>
                     </ScheduleResources>
                     <ScheduleTimeScale Enable="@EnableTimeScale" Interval="@SlotInterval" SlotCount="@SlotCount"></ScheduleTimeScale>
@@ -212,8 +212,8 @@
                                         </div>
                                         <div class="e-description">
                                             <div class="e-page-numbering e-icons"></div>
-                                                <div class="e-description-details e-text-ellipsis">@(Data.IDS)</div>
-                                            </div>
+                                            <div class="e-description-details e-text-ellipsis">@(Data.IDS)</div>
+                                        </div>
                                     </div>
                                 }
                             }
@@ -228,8 +228,8 @@
                                 var dzlDzlId = Data?.DZL_DzlId;
                                 var isAuthorizedManager = DepartmentManagerCRUD();
                                 var startTime = Data?.StartTime;
-                                var disableStateReadOnly = false;
-                                var disableStateAdd = false;
+                                bool disableStateAdd = false;
+                                bool disableStateReadOnly = false;
                                 if (SignedInGroup.Contains("S_ADM_IT") || SignedInGroup.Contains("S_ADM_KADRY"))
                                 {
                                     isAuthorizedManager = Data?.DZL_DzlId;
@@ -239,21 +239,28 @@
                                 @if (priPraId != 0 && ((isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))
                                 || (!isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))))
                                 {
-                                    @if (isAddMode)
+                                    if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
+                                    {
+                                        disableStateAdd = !isAddMode;
+                                        disableStateReadOnly = false;
+                                    }
+                                    else
                                     {
                                         var todayDate = DateTime.Now.Date;
                                         var startTimeDate = startTime?.Date;
 
                                         disableStateAdd = !(startTimeDate.HasValue && startTimeDate.Value >= todayDate);
+                                        disableStateReadOnly = isReadOnly && !isAddMode;
+                                    }
 
+                                    if (isAddMode)
+                                    {
                                         <SfButton Content="Dodaj grafik" OnClick="@(e => OnMoreDetailsClick(e, Data, false))" Disabled="@disableStateAdd" />
                                     }
                                     else
                                     {
-                                        disableStateReadOnly = isReadOnly ? true : false;
+                                        <SfButton CssClass="e-event-edit" Content="Edycja" OnClick="@(e => OnMoreDetailsClick(e, Data, true))" Disabled="@disableStateReadOnly" />
 
-                                        <SfButton CssClass="e-event-edit" Content="Edycja"
-                                                  OnClick="@(e => OnMoreDetailsClick(e, Data, true))" Disabled="@disableStateReadOnly" />
                                         @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
                                         {
                                             <SfButton CssClass="e-event-delete" Content="Usuń" OnClick="@(e => OnDelete(Data))" Disabled="@disableStateReadOnly" />
@@ -333,7 +340,7 @@
                                                 <div class="e-start-end-row">
                                                     <div class="e-texttd">Czas trwania</div>
                                                     <div class="e-start-container">
-                                                        <SfDatePicker @bind-Value="Data.StartTime" ValidateOnInput Min="@SystemTime"></SfDatePicker>
+                                                        <SfDatePicker @bind-Value="Data.StartTime" ValidateOnInput></SfDatePicker>
                                                     </div>
                                                     <span class="e-arrow-container">
                                                         <svg width="16" height="16" viewBox="0 0 32 32" fill="#7D90AB" xmlns="http://www.w3.org/2000/svg" class="css-f81u39">
@@ -353,7 +360,6 @@
                                                     <div class="e-texttd">IDS</div>
                                                     <div>
                                                         <SfTextBox @bind-Value="@(Data.IDS)"></SfTextBox>
-                                                        <ValidationMessage For="()=>(Data.IDS)" />
                                                     </div>
                                                 </div>
                                             </td>
@@ -364,7 +370,6 @@
                                                     <div class="e-texttd">IDD</div>
                                                     <div>
                                                         <SfTextBox @bind-Value="@(Data.IDD)"></SfTextBox>
-                                                        <ValidationMessage For="()=>(Data.IDD)" />
                                                     </div>
                                                 </div>
                                             </td>
@@ -404,7 +409,7 @@
                                                 </div>
                                             </td>
                                         </tr>
-                                        @if (Data.Stan != null || isManager)
+                                        @if (Data.Stan != null || isManager || (SignedInGroup.Contains("S_ADM_IT") || SignedInGroup.Contains("S_ADM_KADRY")))
                                         {
                                             <tr>
                                                 <td>

@@ -10,5 +10,8 @@ namespace SoftlandERPGrafik.Data.Entities.Views
         public int DZL_DzlId { get; set; }
 
         public string? DZL_Kod { get; set; }
+
+        [NotMapped]
+        public bool IsExpand { get; set; } = false;
     }
 }

@@ -7,10 +7,8 @@ namespace SoftlandERPGrafik.Data.Entities.Forms
         [Required(ErrorMessage = "Wybór stanowiska pracy jest wymagany")]
         public Guid RequestId { get; set; }
 
-        [Required(ErrorMessage = "IDS jest wymagany")]
         public string? IDS { get; set; }
 
-        [Required(ErrorMessage = "IDD jest wymagany")]
         public string? IDD { get; set; }
 
         public int? IloscDni { get; set; }
