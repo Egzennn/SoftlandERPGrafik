@@ -3247,7 +3247,7 @@
     <value>Codziennie</value>
   </data>
   <data name="RecurrenceEditor_Days" xml:space="preserve">
-    <value>Dni)</value>
+    <value>Dni</value>
   </data>
   <data name="RecurrenceEditor_End" xml:space="preserve">
     <value>Koniec</value>
@@ -3418,7 +3418,7 @@
     <value>Edytować</value>
   </data>
   <data name="Schedule_EditContent" xml:space="preserve">
-    <value>Jak chciałbyś zmienić spotkanie w serialu?</value>
+    <value>Jak chciałbyś zmienić spotkanie w serii?</value>
   </data>
   <data name="Schedule_EditEvent" xml:space="preserve">
     <value>Wydarzenie</value>

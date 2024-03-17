@@ -13,8 +13,8 @@
         private readonly IRepository<WnioskiForm> grafikRepository;
         private readonly IRepository<OgolneWnioski> wnioskiRepository;
 
-        public WnioskiService(IRepository<WnioskiForm> grafikRepository, IRepository<OgolneWnioski> wnioskiRepository, MainContext mainContext, IADRepository adRepository, ILogger<BaseService> logger, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
-            : base(mainContext, adRepository, logger, userDetailsService, lokalizacjeRepository, dzialyRepository, zrodloRepository, stanRepository, statusRepository)
+        public WnioskiService(IRepository<WnioskiForm> grafikRepository, IRepository<OgolneWnioski> wnioskiRepository, MainContext mainContext, ScheduleContext scheduleContext, IADRepository adRepository, ILogger<BaseService> logger, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
+            : base(mainContext, scheduleContext, adRepository, logger, userDetailsService, lokalizacjeRepository, dzialyRepository, zrodloRepository, stanRepository, statusRepository)
         {
             this.grafikRepository = grafikRepository;
             this.wnioskiRepository = wnioskiRepository;

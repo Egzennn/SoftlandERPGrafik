@@ -9,6 +9,7 @@ namespace SoftlandERPGrafik.Web.Components.Services
     public class BaseService : ServiceCollection
     {
         public readonly MainContext mainContext;
+        public readonly ScheduleContext scheduleContext;
         public readonly IADRepository adRepository;
         public readonly ILogger<BaseService> logger;
         public readonly UserDetailsService userDetailsService;
@@ -18,10 +19,11 @@ namespace SoftlandERPGrafik.Web.Components.Services
         public readonly IRepository<OgolneStan> stanRepository;
         public readonly IRepository<OgolneStatus> statusRepository;
 
-        public BaseService(MainContext mainContext, IADRepository adRepository, ILogger<BaseService> logger, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
+        public BaseService(MainContext mainContext, ScheduleContext scheduleContext, IADRepository adRepository, ILogger<BaseService> logger, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
             : base()
         {
             this.mainContext = mainContext;
+            this.scheduleContext = scheduleContext;
             this.adRepository = adRepository;
             this.logger = logger;
             this.userDetailsService = userDetailsService;
@@ -74,17 +76,6 @@ namespace SoftlandERPGrafik.Web.Components.Services
 
             return signedInGroups;
         }
-
-        public async Task<List<OsobaData>> GetEmployeesAsync()
-        {
-            var employees = await this.zrodloRepository.GetAllAsync();
-
-            return employees.Select(zatrudniony => new OsobaData(zatrudniony)).OrderBy(dzial => dzial.DZL_Kod).ThenBy(osoba => osoba.Imie_Nazwisko).ToList();
-        }
-
-        public async Task<IEnumerable<ZatrudnieniDzialy>> GetDzialyAsync() => await this.dzialyRepository.GetAllAsync();
-
-        public async Task<IEnumerable<OrganizacjaLokalizacje>> GetLocalizationAsync() => await this.lokalizacjeRepository.GetAllAsync();
 
         public async Task<List<string?>> GetStanAsync()
         {

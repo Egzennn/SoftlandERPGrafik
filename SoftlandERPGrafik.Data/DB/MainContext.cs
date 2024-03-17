@@ -16,6 +16,8 @@ namespace SoftlandERPGrafik.Data.DB
 
         public DbSet<WnioskiForm> WnioskiForms { get; set; }
 
+        public DbSet<ScheduleForm> ScheduleForms { get; set; }
+
         public DbSet<OgolneStan> OgolneStanVocabulary { get; set; }
 
         public DbSet<OgolneStatus> OgolneStatusVocabulary { get; set; }

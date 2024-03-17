@@ -50,7 +50,7 @@ namespace SoftlandERPGrafik.Web.Components.Services
                 return new UserDetails
                 {
                     DisplayName = user?.Identity?.Name,
-                    JobTitle = "Developer"
+                    JobTitle = "Developer",
                 };
             }
         }
@@ -77,6 +77,7 @@ namespace SoftlandERPGrafik.Web.Components.Services
     public class UserDetails
     {
         public string? DisplayName { get; set; }
+
         public string? JobTitle { get; set; }
     }
 }

@@ -7,7 +7,8 @@ namespace SoftlandERPGrafik.Data.Entities.Views
     [Keyless]
     public class OrganizacjaLokalizacje
     {
-        public string? Wartosc {  get; set; }
+        public string? Wartosc { get; set; }
+
         public int Lok_LokId { get; set; }
     }
 }

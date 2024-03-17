@@ -68,8 +68,8 @@
         protected override async Task OnInitializedAsync()
         {
             this.aduser = this.ADRepository.GetAllADUsers();
-            Osoby = await this.WnioskiService.GetEmployeesAsync();
-            Dzialy = await this.WnioskiService.GetDzialyAsync();
+            //Osoby = await this.WnioskiService.GetEmployeesAsync();
+            //Dzialy = await this.WnioskiService.GetDzialyAsync();
             this.TimezoneData = new Timezone().GetSystemTimeZone();
             this.userDetails = await this.UserDetailsService.GetUserAllDetailsAsync();
             this.Kierownik = await this.Kierownicy.GetAllAsync();

@@ -1,12 +1,1216 @@
 ﻿@page "/"
+@inject Microsoft.AspNetCore.Components.NavigationManager UriHelper
+@inject ScheduleService ScheduleService
+@inject IRepository<OgolneStan> StanVocabulary
+@inject IRepository<Kierownicy> Kierownicy
+@inject IADRepository ADRepository
+@inject ISnackbar Snackbar
+@inject UserDetailsService UserDetailsService
+@using Microsoft.AspNetCore.Mvc
+@using SoftlandERPGrafik.Data.Entities.Forms
+@using SoftlandERPGrafik.Core.Repositories.Interfaces
+@using SoftlandERPGrafik.Data.Entities.Forms.Data
+@using SoftlandERPGrafik.Data.Entities.Views
+@using SoftlandERPGrafik.Data.Entities.Vocabularies.Forms.Ogolne
+@using SoftlandERPGrafik.Web.Components.Adaptor
+@using SoftlandERPGrafik.Web.Components.Services
+@using System
+@using System.Globalization
+@using System.IO
+@using System.Timers
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Schedule
+@using Syncfusion.Blazor.SplitButtons
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>Harmonogram - SoftlandERP</PageTitle>
 
-<MudTabs Elevation="1" Rounded="true" Centered="true" ApplyEffectsToContainer="true" >
-    <MudTabPanel Text="Grafik">
-        <Grafik />
-    </MudTabPanel>
-    <MudTabPanel Text="Wnioski">
-        <Wnioski />
-    </MudTabPanel>
-</MudTabs>
+<div class="schedule-overview">
+    <div class="">
+        <SfAppBar ColorMode="AppBarColor.Primary">
+            <span class="time e-icons e-clock"></span>
+            <span id="timeBtn" class="time current-time">@SystemTime.ToString("HH:mm:ss")</span>
+            <AppBarSpacer></AppBarSpacer>
+            <SfButton IconCss="e-icons e-print" CssClass="title-bar-btn e-inherit" id="printBtn" OnClick="OnPrintClick">Drukuj</SfButton>
+            <div class="control-panel">
+                <SfUploader AllowedExtensions=".ics" CssClass="calendar-import import-button" AllowMultiple="false">
+                    <UploaderButtons Browse="Import"></UploaderButtons>
+                    <UploaderEvents ValueChange="OnFileUploadChange"></UploaderEvents>
+                </SfUploader>
+            </div>
+            <div class="control-panel calendar-export">
+                <SfDropDownButton Content="Export" class="title-bar-btn e-inherit">
+                    <DropDownMenuItems>
+                        <DropDownMenuItem Text="iCalendar" IconCss="e-icons e-export"></DropDownMenuItem>
+                        <DropDownMenuItem Text="Grafik" IconCss="e-icons e-export-excel"></DropDownMenuItem>
+                        <DropDownMenuItem Text="Wnioski" IconCss="e-icons e-export-excel"></DropDownMenuItem>
+                    </DropDownMenuItems>
+                    <DropDownButtonEvents ItemSelected="OnExportClick"></DropDownButtonEvents>
+                </SfDropDownButton>
+            </div>
+            <SfButton IconCss="e-icons e-search" CssClass="overview-toolbar-settings e-inherit" IconPosition="IconPosition.Top" OnClick="OnSettingsClick"></SfButton>
+        </SfAppBar>
+        <SfToolbar Width="auto" CssClass="overview-toolbar" Height="70px" OverflowMode="OverflowMode.Scrollable" ScrollStep="100">
+            <ToolbarItems>
+                <ToolbarItem PrefixIcon="@(IsDzialyExpanded ? "e-icons e-chevron-down-small" : "e-icons e-chevron-right-small")"
+                             TooltipText="@(IsDzialyExpanded ? "Zwiń działy" : "Rozwiń działy")"
+                             Text="@(IsDzialyExpanded ? "Zwiń działy" : "Rozwiń działy")"
+                             OnClick="OnToggleDzialyButton"
+                             TabIndex=0></ToolbarItem>
+                <ToolbarItem PrefixIcon="e-icons e-plus" TooltipText="Nowe wydarzenie" Text="Nowe wydarzenie" OnClick="OnNewEventAdd" TabIndex=0></ToolbarItem>
+                <ToolbarItem PrefixIcon="e-icons e-repeat" TooltipText="Nowe wydarzenie cykliczne" Text="Nowe wydarzenie cykliczne" OnClick="OnNewRecurringEventAdd" TabIndex=0></ToolbarItem>
+                <ToolbarItem PrefixIcon="e-icons e-refresh" TooltipText="Odśwież" Text="Odśwież" OnClick="@(() => this.ScheduleRef.RefreshEventsAsync())" TabIndex="0"></ToolbarItem>
+                <ToolbarItem Type="@ItemType.Separator"></ToolbarItem>
+                <ToolbarItem PrefixIcon="e-icons e-day" TooltipText="Dzień" Text="Dzień" OnClick="() => OnViewButtonClick(View.TimelineDay)" TabIndex=0></ToolbarItem>
+                <ToolbarItem PrefixIcon="e-icons e-week" TooltipText="Tydzień" Text="Tydzień" OnClick="() => OnViewButtonClick(View.TimelineWeek)" TabIndex=0></ToolbarItem>
+                <ToolbarItem PrefixIcon="e-icons e-week" TooltipText="Tydzień pracy" Text="Tydzień pracy" OnClick="() => OnViewButtonClick(View.TimelineWorkWeek)" TabIndex=0></ToolbarItem>
+                <ToolbarItem PrefixIcon="e-icons e-month" TooltipText="Miesiąc" Text="Miesiąc" OnClick="() => OnViewButtonClick(View.TimelineMonth)" TabIndex=0></ToolbarItem>
+                <ToolbarItem PrefixIcon="e-icons e-month" TooltipText="Rok" Text="Rok" OnClick="() => OnViewButtonClick(View.TimelineYear)" TabIndex=0></ToolbarItem>
+                <ToolbarItem PrefixIcon="e-icons e-agenda-date-range" TooltipText="Agenda" Text="Agenda" OnClick="() => OnViewButtonClick(View.Agenda)" TabIndex=0></ToolbarItem>
+            </ToolbarItems>
+            <ToolbarEvents Created="OnToolbarCreated"></ToolbarEvents>
+        </SfToolbar>
+    </div>
+    <div class="overview-content">
+        <div class="left-panel">
+            <div>
+                <SfSchedule @ref="ScheduleRef" TValue="ScheduleForm" Width="100%" Height="650px" @bind-SelectedDate="@SelectedDate" @bind-CurrentView="@CurrentView" FirstDayOfWeek="@FirstDayOfWeek" EnableAutoRowHeight="@isRowAutoHeight" AllowDragAndDrop="false" AllowResizing="false">
+                    <ScheduleGroup Resources="@GroupData">
+                        <HeaderTooltipTemplate>
+                            @{
+                                var resourceData = (context as TemplateContext).ResourceData as OsobaData;
+                                var resourceDataDzial = (context as TemplateContext).ResourceData as ZatrudnieniDzialy;
+                                @if (resourceData != null && resourceDataDzial == null)
+                                {
+                                    <div class="resource-name">@(resourceData.Imie_Nazwisko)</div>
+                                }
+                                else
+                                {
+                                    <div class="resource-name">@(resourceDataDzial.DZL_Kod)</div>
+                                }
+                            }
+                        </HeaderTooltipTemplate>
+                    </ScheduleGroup>
+                    <ScheduleResources>
+                        <ScheduleResource TValue="int" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Query="@DepartmanetQuery" Field="DZL_DzlId" Title="Dzialy" Name="Dzialy" TextField="DZL_Kod" IdField="DZL_DzlId" GroupIDField="DZL_ParentId" ExpandedField="IsExpand"></ScheduleResource>
+                        <ScheduleResource TValue="int" TItem="OsobaData" DataSource="@Osoby" Query="@ResourceQuery" Field="PRI_PraId" Title="Osoby" Name="Osoby" TextField="Imie_Nazwisko" IdField="PRI_PraId" GroupIDField="DZL_DzlId"></ScheduleResource>
+                    </ScheduleResources>
+                    <ScheduleTimeScale Enable="@EnableTimeScale" Interval="@SlotInterval" SlotCount="@SlotCount"></ScheduleTimeScale>
+                    <ScheduleEvents TValue="ScheduleForm" EventRendered="OnEventRendered"></ScheduleEvents>
+                    <ScheduleEventSettings TValue="ScheduleForm" EnableTooltip="@TooltipEnable" Query="@LocalizationQuery">
+                        <ChildContent>
+                            <SfDataManager AdaptorInstance="@typeof(ScheduleAdaptor)" Adaptor="Adaptors.CustomAdaptor">
+                            </SfDataManager>
+                        </ChildContent>
+                        <TooltipTemplate>
+                            @{
+                                ScheduleForm data = (context as ScheduleForm);
+                                OgolneWnioski? wnioski = WnioskiData.FirstOrDefault(x => x.Id == data.RequestId);
+                                string wnioskiName = (wnioski != null) ? wnioski.Wartosc : data.RequestId.ToString();
+                                string formattedStartTime = data.StartTime.ToString(DateFormat, CultureInfo.CurrentCulture);
+                                string formattedEndTime = data.EndTime.AddDays(-1).ToString(DateFormat, CultureInfo.CurrentCulture);
+                                <div class="tooltip-wrap">
+                                    @if (data.Type == "Grafik")
+                                    {
+                                        if (data.Description != null)
+                                        {
+                                            <div class="content-area">
+                                                <div class="name">@data.Description</div>
+                                            </div>
+                                        }
+                                        else { }
+                                    }
+                                    else
+                                    {
+                                        <div class="name">@wnioskiName</div>
+                                        <div class="name">@($"{formattedStartTime} - {formattedEndTime}")</div>
+                                    }
+                                </div>
+                            }
+                        </TooltipTemplate>
+                        <Template>
+                            @{
+                                ScheduleForm? data = (context as ScheduleForm);
+                                OrganizacjaLokalizacje? location = LocalizationData.FirstOrDefault(x => x.Lok_LokId == data.LocationId);
+                                string locationName = (location != null) ? location.Wartosc : data.LocationId.ToString();
+                                string formattedStartTimeGrafik = data.StartTime.ToString("HH:mm");
+                                string formattedEndTimeGrafik = data.EndTime.ToString("HH:mm");
+                                OgolneWnioski? wnioski = WnioskiData.FirstOrDefault(x => x.Id == data.RequestId);
+                                string wnioskiName = (wnioski != null) ? wnioski.Wartosc : data.RequestId.ToString();
+                                string formattedStartTimeWnioski = data.StartTime.ToString(DateFormat, CultureInfo.CurrentCulture);
+                                string formattedEndTimeWnioski = data.EndTime.AddDays(-1).ToString(DateFormat, CultureInfo.CurrentCulture);
+                                <div class='template-wrap'>
+
+                                    @if (data.Type == "Grafik")
+                                    {
+                                        if (LocalizationData != null)
+                                        {
+                                            @if (data.IsAllDay)
+                                            {
+                                                <div class="cell-info">Cały dzień</div>
+                                            }
+                                            else
+                                            {
+                                                <div class="cell-info">@($"{formattedStartTimeGrafik} - {formattedEndTimeGrafik}")</div>
+                                            }
+                                            <div class="cell-info">@locationName</div>
+                                        }
+                                        else
+                                        {
+                                            <p>Loading...</p>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="cell-info">@wnioskiName</div>
+                                        <div class="cell-info">@($"{formattedStartTimeWnioski} - {formattedEndTimeWnioski}")</div>
+                                    }
+                                </div>
+
+                            }
+                        </Template>
+                    </ScheduleEventSettings>
+                    <ScheduleViews>
+                        <ScheduleView Option="View.Agenda"></ScheduleView>
+                        <ScheduleView Option="View.TimelineDay"></ScheduleView>
+                        <ScheduleView Option="View.TimelineWeek"></ScheduleView>
+                        <ScheduleView Option="View.TimelineWorkWeek"></ScheduleView>
+                        <ScheduleView Option="View.TimelineMonth"></ScheduleView>
+                        <ScheduleView Option="View.TimelineYear" ></ScheduleView>
+                    </ScheduleViews>
+                    <ScheduleQuickInfoTemplates>
+                        <HeaderTemplate>
+                            @{
+                                ScheduleForm Data = (context as ScheduleForm);
+                            }
+                            <div class="e-header-icon-wrapper">
+                                <SfButton OnClick="PopupClose" Title="Close" IconCss="e-icons e-close-icon e-btn-icon" CssClass="e-control e-btn e-lib e-close e-flat e-round e-small e-icon-btn"></SfButton>
+                            </div>
+                            <div class="e-subject-wrap">
+                                <div class="e-subject e-text-ellipsis" style="background: @Data.Color); background-image: @Data.Style)">
+                                    <div class="quick-info-title">
+                                        @((Data.CreatedBy == null) ? "Dodaj" : Data.Type)
+                                    </div>
+                                </div>
+                            </div>
+                        </HeaderTemplate>
+                        <ContentTemplate>
+                            @{
+                                ScheduleForm Data = (context as ScheduleForm);
+                                if (Data.CreatedBy == null)
+                                {
+                                    if (isCreated)
+                                    {
+                                        Task.Run(async () => await SetFocus());
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="e-popup-content">
+                                        <div class="e-date-time">
+                                            <div class="e-date-time-icon e-icons"></div>
+                                            <div class="e-date-time-wrapper e-text-ellipsis">
+                                                <div class="e-date-time-details e-text-ellipsis">@(GetEventDetails(Data))</div>
+                                            </div>
+                                        </div>
+                                        @if (Data.Description != null)
+                                        {
+                                            <div class="e-description">
+                                                <div class="e-description-icon e-icons"></div>
+                                                <div class="e-description-details e-text-ellipsis">@(Data.Description)</div>
+                                            </div>
+                                        }
+                                        @if (Data.Type == "Grafik")
+                                        {
+                                            <div class="e-location">
+                                                <div class="e-location-icon e-icons"></div>
+                                                <div class="e-location-details e-text-ellipsis">@((Data.LocationId != 0) ? LocalizationData.FirstOrDefault(item => item.Lok_LokId.Equals(Data.LocationId))?.Wartosc : "")</div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="e-location">
+                                                <div class="e-export-pdf e-icons new"></div>
+                                                <div class="e-location-details e-text-ellipsis">@((Data.RequestId != Guid.Empty) ? WnioskiData.FirstOrDefault(item => item.Id.Equals(Data.RequestId))?.Wartosc : "")</div>
+                                            </div>
+                                            <div class="e-description">
+                                                <div class="e-page-numbering e-icons new"></div>
+                                                <div class="e-description-details e-text-ellipsis">@(Data.IDS)</div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                        </ContentTemplate>
+                        <FooterTemplate>
+                            @{
+                                ScheduleForm Data = (context as ScheduleForm);
+                                var isReadOnly = Data?.IsReadonly ?? false;
+                                var isAddMode = (Data?.CreatedBy == null);
+                                var priPraId = Data?.PRI_PraId;
+                                var isAuthorized = IsCurrentUserAuthorized(priPraId);
+                                var dzlDzlId = Data?.DZL_DzlId;
+                                var isAuthorizedManager = DepartmentManagerCRUD();
+                                var startTime = Data?.StartTime;
+                                var disableStateReadOnly = false;
+                                var disableStateAdd = false;
+                                if (signedInGroup.Contains("S_ADM_IT"))
+                                {
+                                    isAuthorizedManager = Data?.DZL_DzlId;
+                                }
+                            }
+                            <div class="cell-footer">
+                                @if (priPraId != 0 && ((isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))
+                                || (!isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))))
+                                {
+                                    @if (isAddMode)
+                                    {
+                                        var todayDate = DateTime.Now.Date;
+                                        var startTimeDate = startTime?.Date;
+
+                                        disableStateAdd = !(startTimeDate.HasValue && startTimeDate.Value >= todayDate);
+
+                                        <SfButton Content="Dodaj" OnClick="@(e => OnMoreDetailsClick(e, Data, false))" Disabled="@disableStateAdd" />
+                                    }
+                                    else
+                                    {
+                                        disableStateReadOnly = isReadOnly ? true : false;
+
+                                        <SfButton CssClass="e-event-edit" Content="Edycja"
+                                                  OnClick="@(e => OnMoreDetailsClick(e, Data, true))" Disabled="@disableStateReadOnly" />
+                                        @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
+                                        {
+                                            <SfButton CssClass="e-event-delete" Content="Usuń" OnClick="@(e => OnDelete(Data))" Disabled="@disableStateReadOnly" />
+                                        }
+                                    }
+                                }
+                            </div>
+                        </FooterTemplate>
+                    </ScheduleQuickInfoTemplates>
+                    <ScheduleTemplates>
+                        <ResourceHeaderTemplate>
+                            @{
+                                var resourceData = (context as TemplateContext).ResourceData as OsobaData;
+                                var resourceDataDzial = (context as TemplateContext).ResourceData as ZatrudnieniDzialy;
+
+                                @if (resourceData != null && resourceDataDzial == null)
+                                {
+                                    <div style="margin-left: 25px;">
+                                        <div class="e-text-ellipsis e-resource-text">@(resourceData.Imie_Nazwisko)</div>
+                                        @{
+                                            var adUserInfo = GetADUserInfo(resourceData.PRI_Opis);
+                                            if (adUserInfo != null)
+                                            {
+                                                <div class="e-text-ellipsis e-resource-text">@adUserInfo.ToString()</div>
+                                            }
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="e-text-ellipsis e-resource-text">@(resourceDataDzial.DZL_Kod)</div>
+                                }
+                            }
+                        </ResourceHeaderTemplate>
+                        <DateHeaderTemplate>
+                            <div class="date-text">@(((context as TemplateContext).Date).ToString("dd", CultureInfo.CurrentCulture))</div>
+                            <div class="date-text">@(((context as TemplateContext).Date).ToString("ddd", CultureInfo.CurrentCulture))</div>
+                        </DateHeaderTemplate>
+                        <EditorHeaderTemplate>
+                            @{
+                                ScheduleForm Data = (context as ScheduleForm);
+                                var osobaData = GetOsobaDataByDzlId(Data.PRI_PraId);
+                            }
+                            @if (Data.CreatedBy == null)
+                            {
+                                <div>Dodaj grafik pracy dla @osobaData.Imie_Nazwisko</div>
+                            }
+                            else
+                            {
+                                <div>Edytuj grafik pracy dla @osobaData.Imie_Nazwisko</div>
+                            }
+                        </EditorHeaderTemplate>
+                        <EditorTemplate>
+                            @{
+                                var Data = (context as ScheduleForm);
+                                var isAuthorizedManager = DepartmentManagerCRUD();
+                                bool isManager = this.Kierownik.Any(o => o.PRI_Opis == this.userDetails?.SamAccountName);
+                                if (signedInGroup.Contains("S_ADM_IT"))
+                                {
+                                    enableStateA = true;
+                                    enableStateB = true;
+                                }
+                                else if (signedInGroup.Contains("S_ADM_KADRY"))
+                                {
+                                    enableStateB = true;
+                                }
+                                else if (isManager)
+                                {
+                                    enableStateA = true;
+                                }
+                            }
+                            <div class="e-dialog-parent">
+                                <table class="custom-event-editor" width="100%" cellpadding="5" style="padding-bottom: 14px">
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <div class="e-type-row">
+                                                    <div class="e-texttd">Typ</div>
+                                                    <div>
+                                                        <SfDropDownList ID="TypeEventType" DataSource="@Type" @bind-Value="@(Data.Type)">
+                                                            <DropDownListFieldSettings Value="Wartosc" Text="Wartosc"></DropDownListFieldSettings>
+                                                        </SfDropDownList>
+                                                        <ValidationMessage For="()=>(Data.Type)" />
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        @if (Data.Type == "Grafik")
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="e-all-day-time-zone-row">
+                                                        <div class="e-texttd">Cały dzień</div>
+                                                        <div class="checkbox-container">
+                                                            <SfCheckBox TValue="bool" @bind-Checked="@Data.IsAllDay" />
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                        <tr>
+                                            <td>
+                                                <div class="e-start-end-row">
+                                                    <div class="e-texttd">Czas trwania</div>
+                                                    <div class="e-start-container">
+                                                        @if (!Data.IsAllDay && Data.Type == "Grafik")
+                                                        {
+                                                            <SfTimePicker @bind-Value="Data.StartTime"></SfTimePicker>
+                                                        }
+                                                        else
+                                                        {
+                                                            <SfDatePicker @bind-Value="Data.StartTime"></SfDatePicker>
+                                                        }
+                                                    </div>
+                                                    <span class="e-arrow-container">
+                                                        <svg width="16" height="16" viewBox="0 0 32 32" fill="#7D90AB" xmlns="http://www.w3.org/2000/svg" class="css-f81u39">
+                                                            <path d="M21.2913 8.76378L27.5276 15C27.811 15.2835 28 15.7559 28 16.1339C28 16.6063 27.811 16.9843 27.5276 17.2677L21.2913 23.5039C20.6299 24.1654 19.5906 24.1654 18.9291 23.5039C18.2677 22.8425 18.2677 21.8031 18.9291 21.1417L22.3307 17.7402H5.70079C4.75591 17.8346 4 17.0787 4 16.1339C4 15.189 4.75591 14.4331 5.70079 14.4331L22.4252 14.4331L19.0236 11.0315C18.3622 10.3701 18.3622 9.33071 19.0236 8.66929C19.5906 8.10236 20.7244 8.10236 21.2913 8.76378Z" fill="inherit"></path>
+                                                        </svg>
+                                                    </span>
+                                                    <div class="e-end-container">
+                                                        @if (!Data.IsAllDay && Data.Type == "Grafik")
+                                                        {
+                                                            <SfTimePicker @bind-Value="Data.EndTime" Min="Data.StartTime"></SfTimePicker>
+                                                        }
+                                                        else
+                                                        {
+                                                            <SfDatePicker @bind-Value="Data.EndTime" Min="Data.StartTime"></SfDatePicker>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        @if (Data.Type == "Grafik")
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="e-location-row">
+                                                        <div class="e-texttd">Stanowisko pracy</div>
+                                                        <div>
+                                                            <SfDropDownList ID="LocationEventType" DataSource="@LocalizationData" Placeholder="Wybierz stanowisko pracy" @bind-Value="@(Data.LocationId)">
+                                                                <DropDownListFieldSettings Value="Lok_LokId" Text="Wartosc"></DropDownListFieldSettings>
+                                                            </SfDropDownList>
+                                                            <ValidationMessage For="()=>(Data.LocationId)" />
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div class="e-recurrenceeditor">
+                                                        <div>
+                                                            <SfRecurrenceEditor @bind-Value="@(Data.RecurrenceRule)"></SfRecurrenceEditor>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="e-form-row">
+                                                        <div class="e-texttd">IDS</div>
+                                                        <div>
+                                                            <SfTextBox @bind-Value="@(Data.IDS)"></SfTextBox>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div class="e-form-row">
+                                                        <div class="e-texttd">IDD</div>
+                                                        <div>
+                                                            <SfTextBox @bind-Value="@(Data.IDD)"></SfTextBox>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div class="e-location-row">
+                                                        <div class="e-texttd">Typ wniosku</div>
+                                                        <div>
+                                                            <SfDropDownList ID="RequestEventType" DataSource="@WnioskiData" Placeholder="Wybierz wniosek" @bind-Value="@(Data.RequestId)">
+                                                                <DropDownListFieldSettings Value="Id" Text="Wartosc"></DropDownListFieldSettings>
+                                                            </SfDropDownList>
+                                                            <ValidationMessage For="()=>(Data.RequestId)" />
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div class="e-form-row">
+                                                        <div class="e-texttd">Wniosek</div>
+                                                        <div>
+                                                            <SfUploader AllowMultiple="false" AutoUpload="true" AllowedExtensions=".doc, .docx, .pdf">
+                                                                <UploaderEvents ValueChange="@OnChangeUpload" OnRemove="@OnRemoveUpload"></UploaderEvents>
+                                                            </SfUploader>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                        <tr>
+                                            <td>
+                                                <div class="e-description-row">
+                                                    <div class="e-texttd">Notatka</div>
+                                                    <div>
+                                                        <SfTextBox Multiline="true" @bind-Value="@(Data.Description)"></SfTextBox>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        @if (Data.Stan != null || isManager || (signedInGroup.Contains("S_ADM_IT") || signedInGroup.Contains("S_ADM_KADRY")))
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="e-location-row">
+                                                        <div class="e-texttd">Status wniosku Kierownika</div>
+                                                        <div>
+                                                            <SfDropDownList ID="StanEventType" DataSource="@ogolneStatusy" @bind-Value="@Data.Stan" Enabled="@enableStateA">
+                                                                <DropDownListFieldSettings Value="Wartosc" Text="Wartosc"></DropDownListFieldSettings>
+                                                            </SfDropDownList>
+                                                        </div>
+                                                    </div>
+                                                    @if (Data.Type == "Wniosek")
+                                                    {
+                                                        <div class="e-location-row">
+                                                            <div class="e-texttd">Status wniosku ASE</div>
+                                                            <div>
+                                                                <SfDropDownList ID="StatusEventType" DataSource="@ogolneStatusy" @bind-Value="@(Data.Status)" Enabled="@enableStateB">
+                                                                    <DropDownListFieldSettings Value="Wartosc" Text="Wartosc"></DropDownListFieldSettings>
+                                                                </SfDropDownList>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </EditorTemplate>
+                    </ScheduleTemplates>
+                </SfSchedule>
+                <div id="dialog">
+                    <SfDialog IsModal="true" Header="@headerEdit" Width="285px" Height="170px" ShowCloseIcon="true" @bind-Visible="VisibilityEdit">
+                        <DialogTemplates>
+                            <Content>Co chcesz edytować?</Content>
+                        </DialogTemplates>
+                        <DialogButtons>
+                            <DialogButton Content="Wydarzenie" IsPrimary="true" OnClick="@EditOccurrence" />
+                            <DialogButton Content="Całą seria" OnClick="@EditSeries" />
+                        </DialogButtons>
+                    </SfDialog>
+                    <SfDialog IsModal="true" Header="@headerDeleteSeries" Width="285px" Height="170px" ShowCloseIcon="true" @bind-Visible="VisibilityDeleteSeries">
+                        <DialogTemplates>
+                            <Content>Co chcesz usunąć?</Content>
+                        </DialogTemplates>
+                        <DialogButtons>
+                            <DialogButton Content="Wydarzenie w serii" IsPrimary="true" OnClick="@DeleteOccurrence" />
+                            <DialogButton Content="Całą serie" OnClick="@DeleteSeries" />
+                        </DialogButtons>
+                    </SfDialog>
+                    <SfDialog IsModal="true" Header="@headerDelete" Width="285px" Height="170px" ShowCloseIcon="true" @bind-Visible="VisibilityDelete">
+                        <DialogTemplates>
+                            <Content>Czy jesteś pewny usunięcia tego wydarzenia?</Content>
+                        </DialogTemplates>
+                        <DialogButtons>
+                            <DialogButton Content="Usuń" IsPrimary="true" OnClick="@DeleteEvent" />
+                            <DialogButton Content="Anuluj" OnClick="@PopupClose" />
+                        </DialogButtons>
+                    </SfDialog>
+                </div>
+                @if (!ShowSchedule)
+                {
+                    <MudDataGrid Items="@gridDataSource" Dense Filterable="true" FilterMode="DataGridFilterMode.Simple">
+                        <Columns>
+                            <TemplateColumn Title="Dział">
+                                <CellTemplate>
+                                    @{
+                                        var cellContext = (CellContext<ScheduleForm>)context;
+                                        var dzialData = GetDzialDataByDzlId(cellContext.Item.DZL_DzlId);
+                                    }
+                                    @dzialData.DZL_Kod
+                                </CellTemplate>
+                            </TemplateColumn>
+                            <TemplateColumn Title="Imie i Nazwisko">
+                                <CellTemplate>
+                                    @{
+                                        var cellContext = (CellContext<ScheduleForm>)context;
+                                        var osobaData = GetOsobaDataByDzlId(cellContext.Item.PRI_PraId);
+                                    }
+                                    @osobaData.Imie_Nazwisko
+                                </CellTemplate>
+                            </TemplateColumn>
+                            <TemplateColumn Title="Lokalizacja">
+                                <CellTemplate>
+                                    @{
+                                        var cellContext = (CellContext<ScheduleForm>)context;
+                                        var osobaData = GetLocationDataByLokId(cellContext.Item.LocationId);
+                                    }
+                                    @osobaData.Wartosc
+                                </CellTemplate>
+                            </TemplateColumn>
+                            <PropertyColumn Property="x =>x.Description" Title="Notatka"></PropertyColumn>
+                            <PropertyColumn Property="x =>x.StartTime" Title="Początek" Format="g"></PropertyColumn>
+                            <PropertyColumn Property="x =>x.EndTime" Title="Koniec" Format="g"></PropertyColumn>
+
+                        </Columns>
+                    </MudDataGrid>
+                }
+                @*                 <SfContextMenu TValue="MenuItem" CssClass="schedule-context-menu" Target=".e-schedule">
+                <MenuItems>
+                <MenuItem Text="Dzisiaj" IconCss="e-icons e-timeline-today" Id="Today" Hidden="@isCell"></MenuItem>
+                <MenuItem Text="Edytuj wydarzenie" IconCss="e-icons e-edit" Id="Save" Hidden="@isEvent" Disabled="@disableState"></MenuItem>
+                <MenuItem Text="Edytuj wydarzenie" IconCss="e-icons e-edit" Id="EditRecurrenceEvent" Hidden="@isRecurrence" Disabled="@disableState">
+                <MenuItems>
+                <MenuItem Text="Edytuj wystąpienie" Id="EditOccurrence"></MenuItem>
+                <MenuItem Text="Edytuj serie" Id="EditSeries"></MenuItem>
+                </MenuItems>
+                </MenuItem>
+                <MenuItem Text="Usuń wydarzenie" IconCss="e-icons e-trash" Id="Delete" Hidden="@isEvent" Disabled="@disableState"></MenuItem>
+                <MenuItem Text="Usuń wydarzenie" IconCss="e-icons e-trash" Id="DeleteRecurrenceEvent" Hidden="@isRecurrence" Disabled="@disableState">
+                <MenuItems>
+                <MenuItem Text="Usuń wystąpienie" Id="DeleteOccurrence"></MenuItem>
+                <MenuItem Text="Usuń serie" Id="DeleteSeries"></MenuItem>
+                </MenuItems>
+                </MenuItem>
+                </MenuItems>
+                <MenuEvents TValue="MenuItem" OnOpen="OnOpen" ItemSelected="OnItemSelected" Opened="SetDisableState"></MenuEvents>
+                </SfContextMenu>
+                *@
+            </div>
+        </div>
+        <div class="right-panel @((this.IsSettingsVisible ? "" : "hide"))">
+            <div class="control-panel e-css">
+                <div class="col-row">
+                    <label>Wyszukiwarka</label>
+                </div>
+                <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+                <div class="col-row">
+                    <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="DepartamentRef" TValue="int[]" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Placeholder="Dział" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                        <MultiSelectFieldSettings Text="DZL_Kod" Value="DZL_DzlId"></MultiSelectFieldSettings>
+                        <MultiSelectEvents TValue="int[]" TItem="ZatrudnieniDzialy" ValueChange="@(args => OnMultiSelectChange(args, "DZL_DzlId"))"></MultiSelectEvents>
+                    </SfMultiSelect>
+                </div>
+                <div class="col-row">
+                    <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="ResourceRef" TValue="int[]" TItem="OsobaData" DataSource="@Osoby" Placeholder="Imię i nazwisko" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                        <MultiSelectFieldSettings GroupBy="DZL_Kod" Text="Imie_Nazwisko" Value="PRI_PraId"></MultiSelectFieldSettings>
+                        <MultiSelectEvents TValue="int[]" TItem="OsobaData" ValueChange="@(args => OnMultiSelectChange(args, "PRI_PraId"))"></MultiSelectEvents>
+                    </SfMultiSelect>
+                </div>
+                <div class="col-row">
+                    <SfMultiSelect Mode="@VisualMode.CheckBox" TValue="string[]" TItem="string" DataSource="@Type" Placeholder="Typ" ValueChanged="OnTypeChange" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                        <MultiSelectFieldSettings Text="Type"></MultiSelectFieldSettings>
+                    </SfMultiSelect>
+                </div>
+                @if (showSecondMultiSelect)
+                {
+                    <div class="col-row">
+                        <!-- Drugi wielokrotny wybór -->
+                        <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="LocationRef" TValue="int[]" TItem="OrganizacjaLokalizacje" DataSource="@LocalizationData" Placeholder="Lokalizacja" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                            <MultiSelectFieldSettings Text="Wartosc" Value="Lok_LokId"></MultiSelectFieldSettings>
+                        </SfMultiSelect>
+                    </div>
+                }
+                @if (showThirdMultiSelect)
+                {
+                    <div class="col-row">
+                        <!-- Trzeci wielokrotny wybór -->
+                        <SfMultiSelect Mode="@VisualMode.CheckBox" TValue="Guid[]" TItem="OgolneWnioski" DataSource="@WnioskiData" Placeholder="Rodzaj wniosku" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                            <MultiSelectFieldSettings Text="Wartosc" Value="Id"></MultiSelectFieldSettings>
+                        </SfMultiSelect>
+                    </div>
+                }
+                <div class="col-row">
+                    <SfTextBox ID="events-search" Placeholder='Wprowadz opis' @bind-Value="@SearchValue" OnChange="@OnEventSearch"></SfTextBox>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .new {
+        font-size: 16px;
+        padding: 2px 10px 0 0;
+    }
+
+    .e-schedule .e-read-only {
+        opacity: .5;
+    }
+
+    .e-schedule .e-timeline-view .e-date-header-wrap table td.e-current-day,
+    .e-schedule .e-timeline-month-view .e-date-header-wrap table td.e-current-day {
+        font-weight: 600;
+        color: red;
+    }
+
+    .e-schedule .e-timeline-view .e-resource-group-cells,
+    .e-schedule .e-timeline-month-view .e-resource-group-cells {
+        background: #2a416f14;
+    }
+
+    .e-popup-header .e-subject-wrap {
+        padding: 12px 18px;
+    }
+
+        .e-popup-header .e-subject-wrap .e-subject {
+            background: rgba(13,110,253,.3);
+            border-left: 6px solid #0d6efd;
+            border-radius: 4px;
+            color: #212529;
+            cursor: default;
+            font-size: 20px;
+            font-weight: 500;
+            line-height: 1.5;
+            max-height: 87px;
+            padding: 8px;
+        }
+
+    .validation-message {
+        color: red;
+    }
+
+    .cell-info {
+        font-weight: bold;
+        color: #253353;
+    }
+
+    .e-arrow-container {
+        width: 16px;
+        height: 16px;
+    }
+
+    .e-start-end-row {
+        align-items: center;
+        gap: 0,5rem;
+    }
+
+    .e-type-row,
+    .e-location-row,
+    .e-description-row {
+        padding-bottom: 12px;
+        width: 100%;
+    }
+
+    .e-textlabel,
+    .e-texttd {
+        font-weight: bold;
+        color: #253353;
+    }
+
+    .checkbox-container {
+        margin-left: 10px; /* Możesz dostosować wartość odstępu według potrzeb */
+    }
+
+    .quick-info .e-quick-popup-wrapper .e-cell-popup .e-popup-content {
+        padding: 0 14px;
+    }
+    /*HeaderStyles*/
+    .quick-info-header {
+        background-color: white;
+        padding: 8px 18px;
+    }
+
+    .quick-info-header-content {
+        justify-content: flex-end;
+        display: flex;
+        flex-direction: column;
+        padding: 5px 10px 5px;
+    }
+
+    .duration-text {
+        font-size: 11px;
+        letter-spacing: 0.33px;
+        height: 14px;
+    }
+    /*ContentStyles*/
+    .content-area {
+        padding: 10px;
+        width: 100%;
+    }
+
+    .event-content {
+        height: 90px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 15px;
+    }
+
+    .meeting-type-wrap, .meeting-subject-wrap, .notes-wrap {
+        font-size: 11px;
+        color: #666;
+        letter-spacing: 0.33px;
+        height: 24px;
+        padding: 5px;
+    }
+
+    .event-content div label {
+        display: inline-block;
+        min-width: 70px;
+        color: #666;
+        font-weight: bold;
+    }
+
+    .event-content div span {
+        font-size: 11px;
+        color: #151515;
+        letter-spacing: 0.33px;
+        line-height: 14px;
+        padding-left: 8px;
+    }
+
+    .quick-info .e-popup-content {
+    }
+    /*FooterStyles*/
+    .cell-footer.e-btn {
+        background-color: #ffffff;
+        border-color: #878787;
+        color: #878787;
+    }
+
+    .cell-footer {
+        padding-top: 10px;
+    }
+
+    .e-quick-popup-wrapper .e-cell-popup .e-popup-content {
+        padding: 0 14px;
+    }
+
+    .e-schedule .e-quick-popup-wrapper .e-close {
+        display: none;
+    }
+
+    .e-quick-popup-wrapper .e-close {
+        position: relative;
+        right: -90%;
+    }
+
+    .material-dark .e-quick-popup-wrapper .e-event-popup .e-popup-header,
+    .material-dark .quick-info-header {
+        background-color: #424242;
+    }
+
+    .highcontrast .quick-info-header,
+    .tailwind-dark .quick-info-header,
+    .bootstrap-dark .quick-info-header,
+    .fluent-dark .quick-info-header,
+    .bootstrap5-dark .quick-info-header,
+    .fabric-dark .quick-info-header,
+    .material3-dark .quick-info-header {
+        background-color: transparent;
+    }
+
+    .tailwind-dark .quick-info-header-content,
+    .bootstrap-dark .quick-info-header-content,
+    .fabric-dark .quick-info-header-content,
+    .highcontrast .quick-info-header-content,
+    .fluent-dark .quick-info-header-content,
+    .material3-dark .quick-info-header-content {
+        color: #fff !important;
+    }
+
+    .tailwind-dark .event-content div label,
+    .tailwind-dark .event-content div span,
+    .bootstrap-dark .event-content div label,
+    .bootstrap-dark .event-content div span,
+    .bootstrap5-dark .event-content div label,
+    .bootstrap5-dark .event-content div span,
+    .fluent-dark .event-content div label,
+    .fluent-dark .event-content div span,
+    .fabric-dark .event-content div label,
+    .fabric-dark .event-content div span,
+    .highcontrast .event-content div label,
+    .highcontrast .event-content div span,
+    .material3-dark .event-content div label,
+    .material3-dark .event-content div span,
+    .material-dark .event-content div label,
+    .material-dark .event-content div span {
+        color: #fff;
+    }
+
+    .material .e-quick-popup-wrapper .e-popup-footer,
+    .material-dark .e-quick-popup-wrapper .e-popup-footer,
+    .material3 .e-quick-popup-wrapper .e-popup-footer,
+    .material3-dark .e-quick-popup-wrapper .e-popup-footer {
+        display: block !important;
+        padding: 0px 18px 8px 22px !important;
+    }
+
+    .material3 .e-quick-popup-wrapper .e-event-popup .e-popup-header,
+    .material3-dark .e-quick-popup-wrapper .e-event-popup .e-popup-header {
+        border-radius: 12px;
+    }
+
+    .e-schedule .e-appointment:hover {
+        cursor: pointer;
+    }
+
+    .e-schedule .e-work-cells:hover {
+        background-color: rgba(135, 206, 250, 0.1) !important;
+        border: 1px solid lightskyblue !important;
+        cursor: pointer;
+    }
+
+    .tailwind .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #f3f4f6;
+    }
+
+    .tailwind-dark .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #374151;
+        color: #fff;
+    }
+
+    .material .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #fafafa;
+    }
+
+    .material-dark .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #2a2a2a;
+        color: #ffff;
+    }
+
+    .fabric .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #ffffff;
+    }
+
+    .fabric-dark .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #333232;
+        color: #fff;
+    }
+
+    .fluent .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #f3f2f1;
+    }
+
+    .fluent-dark .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #252423;
+        border-color: #c1c1c1;
+        color: #fff;
+    }
+
+    .bootstrap .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #f8f8f8;
+    }
+
+    .bootstrap-dark .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #2a2a2a;
+        color: #fff;
+    }
+
+    .bootstrap5 .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #f8f9fa;
+        color: #212529;
+    }
+
+    .bootstrap5-dark .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #343a40;
+        color: #fff;
+    }
+
+    .highcontrast .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #000000;
+        color: #ffffff;
+    }
+
+    .material3 .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #f3f1f8;
+    }
+
+    .material3-dark .schedule-overview .overview-content .right-panel .control-panel {
+        background-color: #2a2731;
+    }
+
+    .schedule-overview .overview-toolbar.e-rtl + * {
+        flex-direction: row-reverse;
+    }
+
+    .schedule-overview .overview-toolbar.e-toolbar {
+        border-radius: 0;
+    }
+
+        .schedule-overview .overview-toolbar.e-toolbar .e-toolbar-item .e-tbar-btn.e-tbtn-txt {
+            display: inline-grid;
+        }
+
+    .material .schedule-overview .overview-toolbar.e-toolbar {
+        border-style: solid;
+    }
+
+    .schedule-overview .overview-toolbar.e-toolbar .e-toolbar-item:not(.e-separator) {
+        padding: 3.5px;
+    }
+
+    .schedule-overview .overview-toolbar.e-toolbar .e-toolbar-item .e-btn.e-tbar-btn .e-icons.e-btn-icon,
+    .schedule-overview .overview-toolbar.e-toolbar .e-toolbar-item .e-btn.e-tbar-btn .e-tbar-btn-text {
+        line-height: 23px !important;
+        min-height: 23px !important;
+        padding: 0px !important;
+    }
+
+    .schedule-overview .overview-toolbar.e-toolbar .e-toolbar-item.e-template {
+        margin: 0 5px;
+    }
+
+    .schedule-overview .overview-content {
+        display: flex;
+    }
+
+        .schedule-overview .overview-content .left-panel {
+            height: 700px;
+            width: 100%;
+        }
+
+        .schedule-overview .overview-content .right-panel {
+            display: block;
+            height: 700px;
+            transform: translateX(0%);
+            transition: transform .5s ease, width 500ms;
+            width: 500px;
+        }
+
+            .schedule-overview .overview-content .right-panel.hide {
+                display: none;
+                transform: translateX(100%);
+                transition: transform .5s ease, width 500ms;
+                width: 0;
+            }
+
+            .schedule-overview .overview-content .right-panel .control-panel {
+                background: #f8f9fa;
+                font-size: 14px;
+                height: 100%;
+                overflow: auto;
+                padding: 15px;
+                width: 100%;
+            }
+
+                .schedule-overview .overview-content .right-panel .control-panel .col-row {
+                    display: flex;
+                    flex-wrap: wrap;
+                    margin-bottom: 1rem;
+                    justify-content: center;
+                }
+
+                .schedule-overview .overview-content .right-panel .control-panel label {
+                    font-weight: 500;
+                }
+
+                .schedule-overview .overview-content .right-panel .control-panel .col-left {
+                    flex: 0 0 41.666667%;
+                    max-width: 41.666667%;
+                    margin-bottom: 1rem;
+                }
+
+                .schedule-overview .overview-content .right-panel .control-panel .col-right {
+                    flex: 0 0 58.333333%;
+                    max-width: 58.333333%;
+                    margin-bottom: 1rem;
+                }
+
+    .schedule-overview .overview-scheduler {
+        height: 100%;
+        width: 100%;
+    }
+
+    .schedule-overview .e-schedule-toolbar .e-views,
+    .schedule-overview .e-schedule-toolbar .e-schedule-seperator,
+    .schedule-workweek.e-multi-select-list-wrapper.e-checkbox .e-filter-parent,
+    .schedule-resource.e-multi-select-list-wrapper.e-checkbox .e-filter-parent {
+        display: none;
+    }
+
+    .schedule-resource.e-multi-select-list-wrapper.e-checkbox .e-list-parent:first-child li:first-child {
+        background-image: none;
+        opacity: .5;
+        pointer-events: none;
+        user-select: none;
+    }
+
+    .schedule-overview .calendar-import.e-upload {
+        border: 0;
+        padding-left: 0 !important;
+    }
+
+        .schedule-overview .calendar-import.e-upload .e-btn-icon {
+            margin-left: initial;
+        }
+
+        .schedule-overview .calendar-import.e-upload .e-file-select-wrap {
+            padding: 0
+        }
+
+            .schedule-overview .calendar-import.e-upload .e-file-select-wrap .e-file-drop,
+            .calendar-import .e-upload-files {
+                display: none;
+            }
+
+    .e-bigger .schedule-context-menu ul .e-menu-item .e-menu-icon {
+        font-size: 14px;
+    }
+
+    .schedule-context-menu ul .e-menu-item .e-menu-icon {
+        font-size: 12px;
+    }
+
+    .e-schedule .e-timeline-month-view .e-date-header-wrap table col,
+    .e-schedule .e-timeline-month-view .e-content-wrap table col {
+        width: 100px;
+    }
+
+    .schedule-overview.e-schedule .e-vertical-view .e-header-cells,
+    .schedule-overview.e-schedule .e-timeline-month-view .e-header-cells {
+        padding: 0;
+        text-align: center !important;
+    }
+
+    .schedule-overview.e-schedule .date-text {
+        font-size: 14px;
+    }
+
+    .schedule-overview.e-schedule.e-device .date-text {
+        font-size: 12px;
+    }
+
+    .schedule-overview.e-schedule .weather-image {
+        width: 20px;
+        height: 20px;
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-size: cover;
+    }
+
+    .schedule-overview.e-schedule .e-month-view .weather-image {
+        float: right;
+        margin: -20px 2px 0 0;
+        width: 20px;
+        height: 20px;
+    }
+
+    .fluent .e-appbar .e-btn-icon.e-icons,
+    .fluent-dark .e-appbar .e-btn-icon.e-icons {
+        margin-top: -2px;
+    }
+
+    .fluent .e-toolbar-item .e-checkbox-wrapper .e-icons.e-frame,
+    .fluent-dark .e-toolbar-item .e-checkbox-wrapper .e-icons.e-frame {
+        height: 17px;
+        line-height: 17px;
+        width: 17px;
+    }
+
+        .fluent .e-toolbar-item .e-checkbox-wrapper .e-icons.e-frame.e-check,
+        .fluent-dark .e-toolbar-item .e-checkbox-wrapper .e-icons.e-frame.e-check {
+            font-size: 15px;
+            line-height: 16px;
+        }
+
+    .e-toolbar .e-toolbar-item .e-tbar-btn {
+        padding-top: 2px;
+        padding-bottom: 2px;
+    }
+
+    .time {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+        padding: 0 5px;
+    }
+
+    .template {
+        height: 46px;
+        line-height: 23px;
+    }
+
+        .template .icon-child {
+            text-align: center;
+            height: 23px !important;
+        }
+
+        .template .text-child {
+            color: #212529;
+            font-size: 14px;
+            line-height: 23px !important;
+        }
+
+    .import-button .e-css.e-btn {
+        color: inherit;
+        box-shadow: none;
+        background: inherit;
+        border-color: rgba(0, 0, 0, 0);
+    }
+
+    @@media (max-width: 481px) {
+        .schedule-overview .overview-content .right-panel {
+            position: absolute;
+            width: 90%;
+        }
+
+        .import-button,
+        #printBtn,
+        .calendar-export {
+            display: none;
+        }
+    }
+
+    @@media (max-width: 1024px) {
+        .schedule-overview .overview-content .right-panel .control-panel .col-row {
+            display: initial;
+        }
+
+        .schedule-overview .overview-content .right-panel .control-panel .col-left {
+            flex: initial;
+            max-width: initial;
+            margin-bottom: initial;
+        }
+
+        .schedule-overview .overview-content .right-panel .control-panel .col-right {
+            flex: initial;
+            max-width: initial;
+        }
+    }
+
+</style>
