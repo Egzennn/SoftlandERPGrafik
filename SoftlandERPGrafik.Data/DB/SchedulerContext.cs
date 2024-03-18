@@ -18,7 +18,6 @@ namespace SoftlandERPGrafik.Data.DB
 
         public DbSet<ScheduleForm> ScheduleForms { get; set; }
 
-        public DbSet<Holidays> HolidaysData { get; set; }
-
+        //public DbSet<Holidays> HolidaysData { get; set; }
     }
 }

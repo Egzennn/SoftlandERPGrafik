@@ -103,7 +103,7 @@
                         <ScheduleResource TValue="int" TItem="OsobaData" DataSource="@Osoby" Query="@ResourceQuery" Field="PRI_PraId" Title="Osoby" Name="Osoby" TextField="Imie_Nazwisko" IdField="PRI_PraId" GroupIDField="DZL_DzlId"></ScheduleResource>
                     </ScheduleResources>
                     <ScheduleTimeScale Enable="@EnableTimeScale" Interval="@SlotInterval" SlotCount="@SlotCount"></ScheduleTimeScale>
-                    <ScheduleEvents TValue="ScheduleForm" EventRendered="OnEventRendered"></ScheduleEvents>
+                    <ScheduleEvents TValue="ScheduleForm" EventRendered="OnEventRendered" OnRenderCell="OnRenderCell" OnPopupOpen="OnPopupOpen"></ScheduleEvents>
                     <ScheduleEventSettings TValue="ScheduleForm" EnableTooltip="@TooltipEnable" Query="@LocalizationQuery">
                         <ChildContent>
                             <SfDataManager AdaptorInstance="@typeof(ScheduleAdaptor)" Adaptor="Adaptors.CustomAdaptor">
@@ -169,8 +169,8 @@
                                     }
                                     else
                                     {
-                                        <div class="cell-info">@wnioskiName</div>
                                         <div class="cell-info">@($"{formattedStartTimeWnioski} - {formattedEndTimeWnioski}")</div>
+                                        <div class="cell-info">@wnioskiName</div>
                                     }
                                 </div>
 
@@ -240,10 +240,14 @@
                                                 <div class="e-export-pdf e-icons new"></div>
                                                 <div class="e-location-details e-text-ellipsis">@((Data.RequestId != Guid.Empty) ? WnioskiData.FirstOrDefault(item => item.Id.Equals(Data.RequestId))?.Wartosc : "")</div>
                                             </div>
-                                            <div class="e-description">
-                                                <div class="e-page-numbering e-icons new"></div>
-                                                <div class="e-description-details e-text-ellipsis">@(Data.IDS)</div>
-                                            </div>
+                                            @if (Data.IDS != null)
+                                            {
+                                                <div class="e-description">
+                                                    <div class="e-page-numbering e-icons new"></div>
+                                                    <div class="e-description-details e-text-ellipsis">@(Data.IDS)</div>
+                                                </div>
+
+                                            }
                                         }
                                     </div>
                                 }
@@ -643,27 +647,28 @@
                 <div class="col-row">
                     <SfMultiSelect Mode="@VisualMode.CheckBox" TValue="string[]" TItem="string" DataSource="@Type" Placeholder="Typ" ValueChanged="OnTypeChange" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
                         <MultiSelectFieldSettings Text="Type"></MultiSelectFieldSettings>
+                        <MultiSelectEvents TValue="string[]" TItem="string" ValueChange="@(args => OnMultiSelectTypeChange(args, "Type"))"></MultiSelectEvents>
                     </SfMultiSelect>
                 </div>
                 @if (showSecondMultiSelect)
                 {
                     <div class="col-row">
-                        <!-- Drugi wielokrotny wybór -->
                         <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="LocationRef" TValue="int[]" TItem="OrganizacjaLokalizacje" DataSource="@LocalizationData" Placeholder="Lokalizacja" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
                             <MultiSelectFieldSettings Text="Wartosc" Value="Lok_LokId"></MultiSelectFieldSettings>
+                            <MultiSelectEvents TValue="int[]" TItem="OrganizacjaLokalizacje" ValueChange="@(args => OnMultiSelectChange(args, "LocationId"))"></MultiSelectEvents>
                         </SfMultiSelect>
                     </div>
                 }
-                @if (showThirdMultiSelect)
+@*                 @if (showThirdMultiSelect)
                 {
                     <div class="col-row">
-                        <!-- Trzeci wielokrotny wybór -->
-                        <SfMultiSelect Mode="@VisualMode.CheckBox" TValue="Guid[]" TItem="OgolneWnioski" DataSource="@WnioskiData" Placeholder="Rodzaj wniosku" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                        <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="RequestRef" TValue="Guid[]" TItem="OgolneWnioski" DataSource="@WnioskiData" Placeholder="Rodzaj wniosku" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
                             <MultiSelectFieldSettings Text="Wartosc" Value="Id"></MultiSelectFieldSettings>
                         </SfMultiSelect>
+                        <MultiSelectEvents TValue="Guid[]" TItem="OgolneWnioski" ValueChange="@(args => OnMultiSelectRequestChange(args, "RequestId"))"></MultiSelectEvents>
                     </div>
                 }
-                <div class="col-row">
+ *@                <div class="col-row">
                     <SfTextBox ID="events-search" Placeholder='Wprowadz opis' @bind-Value="@SearchValue" OnChange="@OnEventSearch"></SfTextBox>
                 </div>
             </div>
@@ -671,7 +676,12 @@
     </div>
 </div>
 
-<style>
+                        <style>
+
+    .cell-custom-class {
+        background: #42ecf5 !important;
+    }
+
     .new {
         font-size: 16px;
         padding: 2px 10px 0 0;
@@ -728,7 +738,6 @@
         gap: 0,5rem;
     }
 
-    .e-type-row,
     .e-location-row,
     .e-description-row {
         padding-bottom: 12px;
@@ -1212,5 +1221,4 @@
             max-width: initial;
         }
     }
-
 </style>

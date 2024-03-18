@@ -16,7 +16,6 @@ using SoftlandERPGrafik.Web.Components.Adaptor;
 using SoftlandERPGrafik.Web.Components.Services;
 using Syncfusion.Blazor;
 using System.Globalization;
-using SoftlandERPGrafik.Web.Components.Pages;
 using SoftlandERPGrafik.Data.Entities.Forms.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,17 +38,11 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddSyncfusionBlazor();
 
 builder.Services.AddScoped<UserDetailsService>();
-builder.Services.AddScoped<GrafikService>();
-builder.Services.AddScoped<WnioskiService>();
 builder.Services.AddScoped<ScheduleService>();
-builder.Services.AddScoped<GrafikAdaptor>();
-builder.Services.AddScoped<WnioskiAdaptor>();
 builder.Services.AddScoped<ScheduleAdaptor>();
 
-builder.Services.AddTransient<IRepository<GrafikForm>, Repository<GrafikForm>>();
-builder.Services.AddTransient<IRepository<WnioskiForm>, Repository<WnioskiForm>>();
 builder.Services.AddTransient<IRepository<ScheduleForm>, ScheduleRepository<ScheduleForm>>();
-builder.Services.AddTransient<IRepository<Holidays>, ScheduleRepository<Holidays>>();
+builder.Services.AddTransient<IRepository<Holidays>, Repository<Holidays>>();
 builder.Services.AddTransient<IRepository<OgolneStan>, Repository<OgolneStan>>();
 builder.Services.AddTransient<IRepository<OgolneStatus>, Repository<OgolneStatus>>();
 builder.Services.AddTransient<IRepository<OgolneWnioski>, Repository<OgolneWnioski>>();

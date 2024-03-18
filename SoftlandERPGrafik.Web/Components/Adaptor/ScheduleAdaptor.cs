@@ -39,7 +39,7 @@ namespace SoftlandERPGrafik.Web.Components.Adaptor
                 }
                 else if (@params.ContainsKey("Type") && @params["Type"] is IEnumerable<object> types)
                 {
-                    List<string> typeList = types.Select(type => type.ToString()).ToList();
+                    List<string?> typeList = types.Select(type => type.ToString()).ToList();
                     var eventDataFilteredByType = eventData.Where(e => typeList.Contains(e.Type)).ToList();
 
                     return dataManagerRequest.RequiresCounts ? new DataResult() : eventDataFilteredByType;

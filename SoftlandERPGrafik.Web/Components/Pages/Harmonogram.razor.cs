@@ -33,8 +33,8 @@
         SfMultiSelect<int[], ZatrudnieniDzialy>? DepartamentRef;
         SfMultiSelect<int[], OsobaData>? ResourceRef;
         SfMultiSelect<int[], OrganizacjaLokalizacje>? LocationRef;
+        SfMultiSelect<Guid[], OgolneWnioski>? RequestRef;
         SfSchedule<ScheduleForm>? ScheduleRef;
-        SfSchedule<ExportData>? ScheduleRefExport;
         bool isCreated;
         private Timezone TimezoneData { get; set; } = new Timezone();
         private static IEnumerable<OsobaData>? Osoby;
@@ -75,7 +75,7 @@
         private string headerEdit = "Edycja wydarzenia/serii";
         private string headerDeleteSeries = "Usunięcie wydarzenia/serii";
         private string headerDelete = "Usuń wydarzenie";
-
+        public string[] CellCustomClass = { "cell-custom-class" };
         private bool VisibilityEdit { get; set; } = false;
 
         private bool VisibilityDelete { get; set; } = false;
@@ -94,6 +94,17 @@
             this.Kierownik = await this.Kierownicy.GetAllAsync();
             this.ogolneStatusy = await this.ScheduleService.GetStatusAsync();
             this.signedInGroup = this.ScheduleService.GetSignedInGroups(userDetails?.SamAccountName);
+        }
+
+        public async void OnRenderCell(RenderCellEventArgs args)
+        {
+            var item = args.Date;
+            HolidaysDate holidays = new HolidaysDate();
+            bool exist = holidays.dateCollection.Any(d => d.Year == item.Year && d.Month == item.Month && d.Day == item.Day);
+            if (exist)
+            {
+                args.CssClasses = new List<string>(CellCustomClass);
+            }
         }
 
         private async Task EditOccurrence()
@@ -318,6 +329,25 @@
                 args.Data.IsReadonly = true;
                 attributes.Add("class", "e-read-only");
             }
+
+            var item = args.Data.StartTime;
+            HolidaysDate holidays = new HolidaysDate();
+            bool exist = holidays.dateCollection.Any(d => d.Year == item.Year && d.Month == item.Month && d.Day == item.Day);
+            if (exist)
+            {
+                args.Cancel = true;
+            }
+        }
+
+        public void OnPopupOpen(PopupOpenEventArgs<ScheduleForm> args)
+        {
+            var item = args.Data.StartTime;
+            HolidaysDate holidays = new HolidaysDate();
+            bool exist = holidays.dateCollection.Any(d => d.Year == item.Year && d.Month == item.Month && d.Day == item.Day);
+            if (exist)
+            {
+                args.Cancel = true;
+            }
         }
 
         // Wyszukiwarka
@@ -429,24 +459,24 @@
 
         public void OnMultiSelectRequestChange(Syncfusion.Blazor.DropDowns.MultiSelectChangeEventArgs<Guid[]> args, string field)
         {
-            WhereFilter predicate;
+            //WhereFilter predicate;
 
-            if (args.Value != null)
-            {
-                var filters = args.Value.Select(id => new WhereFilter
-                {
-                    Field = field,
-                    Operator = "equal",
-                    value = id,
-                });
+            //if (args.Value != null)
+            //{
+            //    var filters = args.Value.Select(id => new WhereFilter
+            //    {
+            //        Field = field,
+            //        Operator = "equal",
+            //        value = id,
+            //    });
 
-                predicate = filters.Aggregate((filter1, filter2) => filter1.Or(filter2));
-                this.LocalizationQuery = new Query().AddParams("RequestId", args.Value);
-            }
-            else
-            {
-                this.LocalizationQuery = new Query();
-            }
+            //    predicate = filters.Aggregate((filter1, filter2) => filter1.Or(filter2));
+            //    this.LocalizationQuery = new Query().AddParams("RequestId", args.Value);
+            //}
+            //else
+            //{
+            //    this.LocalizationQuery = new Query();
+            //}
         }
 
         private async void OnNewEventAdd()
@@ -464,6 +494,7 @@
                 IsAllDay = false,
                 PRI_PraId = user.PRI_PraId,
                 DZL_DzlId = user.DZL_DzlId,
+                Stan = "Plan",
             };
             await this.ScheduleRef.OpenEditorAsync(eventData, CurrentAction.Add);
         }
@@ -484,6 +515,7 @@
                 PRI_PraId = user.PRI_PraId,
                 DZL_DzlId = user.DZL_DzlId,
                 RecurrenceRule = "FREQ=DAILY;INTERVAL=1;",
+                Stan = "Plan",
             };
             await this.ScheduleRef.OpenEditorAsync(eventData, CurrentAction.Add);
         }

@@ -1,12 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using SoftlandERPGrafik.Core.Repositories.Interfaces;
+﻿using SoftlandERPGrafik.Core.Repositories.Interfaces;
 using SoftlandERPGrafik.Data.DB;
 using SoftlandERPGrafik.Data.Entities.Forms;
 using SoftlandERPGrafik.Data.Entities.Forms.Data;
 using SoftlandERPGrafik.Data.Entities.Views;
 using SoftlandERPGrafik.Data.Entities.Vocabularies.Forms.Ogolne;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace SoftlandERPGrafik.Web.Components.Services
 {
@@ -15,13 +12,15 @@ namespace SoftlandERPGrafik.Web.Components.Services
         private readonly IRepository<ScheduleForm> repository;
         private readonly IRepository<Holidays> holidaysRepository;
         private readonly IRepository<OgolneWnioski> wnioskiRepository;
+        private readonly IRepository<Kierownicy> kierownicyRepository;
 
-        public ScheduleService(IRepository<ScheduleForm> repository, IRepository<Holidays> holidaysRepository, IRepository<OgolneWnioski> wnioskiRepository, MainContext mainContext, ScheduleContext scheduleContext, IADRepository adRepository, ILogger<BaseService> logger, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
+        public ScheduleService(IRepository<ScheduleForm> repository, IRepository<Holidays> holidaysRepository, IRepository<OgolneWnioski> wnioskiRepository, IRepository<Kierownicy> kierownicyRepository, MainContext mainContext, ScheduleContext scheduleContext, IADRepository adRepository, ILogger<BaseService> logger, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
             : base(mainContext, scheduleContext, adRepository, logger, userDetailsService, lokalizacjeRepository, dzialyRepository, zrodloRepository, stanRepository, statusRepository)
         {
             this.repository = repository;
             this.holidaysRepository = holidaysRepository;
             this.wnioskiRepository = wnioskiRepository;
+            this.kierownicyRepository = kierownicyRepository;
         }
 
         public async Task<List<OsobaData>> GetEmployeesAsync()
@@ -100,7 +99,16 @@ namespace SoftlandERPGrafik.Web.Components.Services
 
             app.Type = appointment.Type;
             app.StartTime = appointment.StartTime;
-            app.EndTime = appointment.EndTime;
+            DateTime endTime = appointment.EndTime;
+            if (appointment.RecurrenceRule != null)
+            {
+                app.EndTime = appointment.StartTime.Date + endTime.TimeOfDay;
+            }
+            else
+            {
+                app.EndTime = appointment.EndTime;
+            }
+
             app.LocationId = appointment.LocationId;
             app.RequestId = appointment.RequestId;
             app.Description = appointment.Description;
@@ -118,7 +126,11 @@ namespace SoftlandERPGrafik.Web.Components.Services
             app.RecurrenceID = appointment.RecurrenceID;
             app.RecurrenceException = appointment.RecurrenceException;
             app.Stan = "Plan";
-            app.Status = "Plan";
+            if (appointment.Type == "Wniosek")
+            {
+                app.Status = "Plan";
+            }
+
             app.CreatedBy = userDetails?.SamAccountName;
 
             await this.repository.InsertAsync(app);
@@ -128,6 +140,8 @@ namespace SoftlandERPGrafik.Web.Components.Services
         {
             var app = await this.repository.GetByIdAsync(appointment.Id);
             var userDetails = await this.userDetailsService.GetUserAllDetailsAsync();
+            var kierownicy = await this.kierownicyRepository.GetAllAsync();
+            var kierownicyAkronim = kierownicy?.Select(x => x.PRI_Opis).ToList();
 
             if (app != null)
             {
@@ -152,8 +166,22 @@ namespace SoftlandERPGrafik.Web.Components.Services
                 app.RecurrenceException = appointment.RecurrenceException;
                 app.Updated = DateTime.Now;
                 app.UpdatedBy = userDetails?.SamAccountName;
-                app.Stan = appointment.Stan;
-                app.Status = appointment.Status;
+                if (kierownicyAkronim.Contains(userDetails.SamAccountName) || userDetails.SamAccountName == "ASE" || userDetails.SamAccountName == "BWL")
+                {
+                    app.Stan = appointment.Stan;
+                    if (appointment.Type == "Wniosek")
+                    {
+                        app.Status = appointment.Status;
+                    }
+                }
+                else
+                {
+                    app.Stan = "Plan";
+                    if (appointment.Type == "Wniosek")
+                    {
+                        app.Status = "Plan";
+                    }
+                }
 
                 await this.repository.UpdateAsync(app);
             }
@@ -168,7 +196,7 @@ namespace SoftlandERPGrafik.Web.Components.Services
         {
             var wnioski = await this.wnioskiRepository.GetAllAsync();
 
-            var wnioskiOrder = wnioski.OrderBy(s => s?.Wartosc);
+            var wnioskiOrder = wnioski?.OrderBy(s => s?.Wartosc);
 
             return wnioskiOrder;
         }
@@ -188,7 +216,6 @@ namespace SoftlandERPGrafik.Web.Components.Services
                     weekdaysAmount++;
                 }
             }
-
             return weekdaysAmount;
         }
     }
