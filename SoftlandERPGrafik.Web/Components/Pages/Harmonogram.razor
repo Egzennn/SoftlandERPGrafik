@@ -183,7 +183,7 @@
                         <ScheduleView Option="View.TimelineWeek"></ScheduleView>
                         <ScheduleView Option="View.TimelineWorkWeek"></ScheduleView>
                         <ScheduleView Option="View.TimelineMonth"></ScheduleView>
-                        <ScheduleView Option="View.TimelineYear" ></ScheduleView>
+                        <ScheduleView Option="View.TimelineYear"></ScheduleView>
                     </ScheduleViews>
                     <ScheduleQuickInfoTemplates>
                         <HeaderTemplate>
@@ -299,6 +299,18 @@
                         </FooterTemplate>
                     </ScheduleQuickInfoTemplates>
                     <ScheduleTemplates>
+                        <CellTemplate>
+                            <div class="templatewrap">
+                                @{
+                                    var today = (context as TemplateContext).Date;
+                                    var todayHoliday = this.Holiday?.FirstOrDefault(h => h.Rok == today.Year && h.Mies == today.Month && h.Dzien == today.Day);
+                                    if (todayHoliday != null)
+                                    {
+                                        <div class="caption">@todayHoliday.Nazwa</div>
+                                    }
+                                }
+                            </div>
+                        </CellTemplate>
                         <ResourceHeaderTemplate>
                             @{
                                 var resourceData = (context as TemplateContext).ResourceData as OsobaData;
@@ -659,16 +671,16 @@
                         </SfMultiSelect>
                     </div>
                 }
-@*                 @if (showThirdMultiSelect)
+                @*                 @if (showThirdMultiSelect)
                 {
-                    <div class="col-row">
-                        <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="RequestRef" TValue="Guid[]" TItem="OgolneWnioski" DataSource="@WnioskiData" Placeholder="Rodzaj wniosku" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                            <MultiSelectFieldSettings Text="Wartosc" Value="Id"></MultiSelectFieldSettings>
-                        </SfMultiSelect>
-                        <MultiSelectEvents TValue="Guid[]" TItem="OgolneWnioski" ValueChange="@(args => OnMultiSelectRequestChange(args, "RequestId"))"></MultiSelectEvents>
-                    </div>
+                <div class="col-row">
+                <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="RequestRef" TValue="Guid[]" TItem="OgolneWnioski" DataSource="@WnioskiData" Placeholder="Rodzaj wniosku" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                <MultiSelectFieldSettings Text="Wartosc" Value="Id"></MultiSelectFieldSettings>
+                </SfMultiSelect>
+                <MultiSelectEvents TValue="Guid[]" TItem="OgolneWnioski" ValueChange="@(args => OnMultiSelectRequestChange(args, "RequestId"))"></MultiSelectEvents>
+                </div>
                 }
- *@                <div class="col-row">
+                *@                <div class="col-row">
                     <SfTextBox ID="events-search" Placeholder='Wprowadz opis' @bind-Value="@SearchValue" OnChange="@OnEventSearch"></SfTextBox>
                 </div>
             </div>
@@ -676,7 +688,27 @@
     </div>
 </div>
 
-                        <style>
+<style>
+    .e-schedule .caption,
+    .date-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .e-schedule .caption {
+        font-weight: bold;
+        white-space: normal;
+    }
+
+    .custom-class {
+        background-color: #2a416f14 !important;
+    }
+
+    .schedule-cell-customization.e-schedule .e-month-view .e-work-cells:not(.e-work-days) {
+        background-color: #2a416f14 !important;
+    }
 
     .cell-custom-class {
         background: #42ecf5 !important;

@@ -42,6 +42,7 @@
         private IEnumerable<Kierownicy>? Kierownik;
         private IEnumerable<OrganizacjaLokalizacje>? LocalizationData;
         private static IEnumerable<OgolneWnioski>? WnioskiData;
+        public IEnumerable<Holidays>? Holiday;
         private List<string?> ogolneStatusy;
         private List<ScheduleForm>? gridDataSource;
         private bool ShowSchedule { get; set; } = true;
@@ -75,7 +76,9 @@
         private string headerEdit = "Edycja wydarzenia/serii";
         private string headerDeleteSeries = "Usunięcie wydarzenia/serii";
         private string headerDelete = "Usuń wydarzenie";
-        public string[] CellCustomClass = { "cell-custom-class" };
+        private string[] cellCustomClass = { "cell-custom-class" };
+        private string[] customClass = { "custom-class" };
+
         private bool VisibilityEdit { get; set; } = false;
 
         private bool VisibilityDelete { get; set; } = false;
@@ -91,6 +94,7 @@
             this.TimezoneData = new Timezone().GetSystemTimeZone();
             this.LocalizationData = await this.ScheduleService.GetLocalizationAsync();
             WnioskiData = await this.ScheduleService.GetWnioskiAsync();
+            this.Holiday = await this.ScheduleService.GetHolidaysAsync();
             this.Kierownik = await this.Kierownicy.GetAllAsync();
             this.ogolneStatusy = await this.ScheduleService.GetStatusAsync();
             this.signedInGroup = this.ScheduleService.GetSignedInGroups(userDetails?.SamAccountName);
@@ -103,7 +107,15 @@
             bool exist = holidays.dateCollection.Any(d => d.Year == item.Year && d.Month == item.Month && d.Day == item.Day);
             if (exist)
             {
-                args.CssClasses = new List<string>(CellCustomClass);
+                args.CssClasses = new List<string>(this.cellCustomClass);
+            }
+
+            if (args.ElementType == ElementType.WorkCells)
+            {
+                if (args.Date.DayOfWeek == DayOfWeek.Sunday || args.Date.DayOfWeek == DayOfWeek.Saturday)
+                {
+                    args.CssClasses = new List<string>(this.customClass);
+                }
             }
         }
 
