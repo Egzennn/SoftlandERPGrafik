@@ -90,8 +90,8 @@
         {
             this.aduser = this.ADRepository.GetAllADUsers();
             this.userDetails = await this.UserDetailsService.GetUserAllDetailsAsync();
-            Osoby = await this.ScheduleService.GetEmployeesAsync();
-            Dzialy = await this.ScheduleService.GetDepartamentAsync(userDetails?.SamAccountName);
+            this.Osoby = await this.ScheduleService.GetEmployeesAsync();
+            this.Dzialy = await this.ScheduleService.GetDepartamentAsync(userDetails?.SamAccountName);
             this.TimezoneData = new Timezone().GetSystemTimeZone();
             this.LocalizationData = await this.ScheduleService.GetLocalizationAsync();
             WnioskiData = await this.ScheduleService.GetWnioskiAsync();

@@ -101,8 +101,14 @@
                             </HeaderTooltipTemplate>
                         </ScheduleGroup>
                         <ScheduleResources>
-                            <ScheduleResource TValue="int" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Query="@DepartmanetQuery" Field="DZL_DzlId" Title="Dzialy" Name="Dzialy" TextField="DZL_Kod" IdField="DZL_DzlId" GroupIDField="DZL_ParentId" ExpandedField="IsExpand"></ScheduleResource>
-                            <ScheduleResource TValue="int" TItem="OsobaData" DataSource="@Osoby" Query="@ResourceQuery" Field="PRI_PraId" Title="Osoby" Name="Osoby" TextField="Imie_Nazwisko" IdField="PRI_PraId" GroupIDField="DZL_DzlId"></ScheduleResource>
+                            <ScheduleResource TValue="int" TItem="ZatrudnieniDzialy" Query="@DepartmanetQuery" Field="DZL_DzlId" Title="Dzialy" Name="Dzialy" TextField="DZL_Kod" IdField="DZL_DzlId" GroupIDField="DZL_ParentId" ExpandedField="IsExpand">
+                                <SfDataManager AdaptorInstance="@typeof(DzialAdaptor)" Adaptor="Adaptors.CustomAdaptor">
+                                </SfDataManager>
+                            </ScheduleResource>
+                            <ScheduleResource TValue="int" TItem="OsobaData" Query="@ResourceQuery" Field="PRI_PraId" Title="Osoby" Name="Osoby" TextField="Imie_Nazwisko" IdField="PRI_PraId" GroupIDField="DZL_DzlId">
+                                <SfDataManager AdaptorInstance="@typeof(OsobaAdaptor)" Adaptor="Adaptors.CustomAdaptor">
+                                </SfDataManager>
+                            </ScheduleResource>
                         </ScheduleResources>
                         <ScheduleTimeScale Enable="@EnableTimeScale" Interval="@SlotInterval" SlotCount="@SlotCount"></ScheduleTimeScale>
                         <ScheduleEvents TValue="ScheduleForm" EventRendered="OnEventRendered" OnRenderCell="OnRenderCell" OnPopupOpen="OnPopupOpen"></ScheduleEvents>
@@ -726,9 +732,9 @@ else
     }
 
     /*         .schedule-cell-customization.e-schedule .e-month-view .e-work-cells:not(.e-work-days) {
-                background-color: #2a416f14 !important;
-            }
-     */
+                    background-color: #2a416f14 !important;
+                }
+         */
     .cell-custom-class {
         background: #42ecf5 !important;
     }

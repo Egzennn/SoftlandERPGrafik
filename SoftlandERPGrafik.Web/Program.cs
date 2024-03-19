@@ -40,6 +40,8 @@ builder.Services.AddSyncfusionBlazor();
 builder.Services.AddScoped<UserDetailsService>();
 builder.Services.AddScoped<ScheduleService>();
 builder.Services.AddScoped<ScheduleAdaptor>();
+builder.Services.AddScoped<OsobaAdaptor>();
+builder.Services.AddScoped<DzialAdaptor>();
 
 builder.Services.AddTransient<IRepository<ScheduleForm>, ScheduleRepository<ScheduleForm>>();
 builder.Services.AddTransient<IRepository<Holidays>, Repository<Holidays>>();

@@ -18,7 +18,7 @@ namespace SoftlandERPGrafik.Web.Components.Adaptor
         public override async Task<object> ReadAsync(DataManagerRequest dataManagerRequest, string key = null)
         {
             System.Collections.Generic.IDictionary<string, object> @params = dataManagerRequest.Params;
-
+            await Task.Delay(100);
             var eventData = await this.appService.Get();
 
             if (@params != null)
@@ -53,21 +53,24 @@ namespace SoftlandERPGrafik.Web.Components.Adaptor
         //Performs Insert operation
         public async override Task<object> InsertAsync(DataManager dataManager, object data, string key)
         {
-            await this.appService.Insert(data as ScheduleForm);
+			await Task.Delay(100);
+			await this.appService.Insert(data as ScheduleForm);
             return data;
         }
 
         //Performs Update operation
         public async override Task<object> UpdateAsync(DataManager dataManager, object data, string keyField, string key)
         {
-            await this.appService.Update(data as ScheduleForm);
+			await Task.Delay(100);
+			await this.appService.Update(data as ScheduleForm);
             return data;
         }
 
         //Performs Delete operation
         public async override Task<object> RemoveAsync(DataManager dataManager, object data, string keyField, string key)
         {
-            Guid id = (Guid)data;
+			await Task.Delay(100);
+			Guid id = (Guid)data;
             await this.appService.Delete(id);
             return data;
         }
@@ -75,7 +78,8 @@ namespace SoftlandERPGrafik.Web.Components.Adaptor
         //Performs Batch update operations
         public async override Task<object> BatchUpdateAsync(DataManager dataManager, object changedRecords, object addedRecords, object deletedRecords, string keyField, string key, int? dropIndex)
         {
-            object records = deletedRecords;
+			await Task.Delay(100);
+			object records = deletedRecords;
             List<ScheduleForm>? deleteData = deletedRecords as List<ScheduleForm>;
             if (deleteData != null)
             {
