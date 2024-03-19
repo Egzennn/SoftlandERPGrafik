@@ -37,14 +37,15 @@
         SfSchedule<ScheduleForm>? ScheduleRef;
         bool isCreated;
         private Timezone TimezoneData { get; set; } = new Timezone();
-        private static IEnumerable<OsobaData>? Osoby;
-        private static IEnumerable<ZatrudnieniDzialy>? Dzialy;
+        private IEnumerable<OsobaData>? Osoby;
+        private IEnumerable<ZatrudnieniDzialy>? Dzialy;
         private IEnumerable<Kierownicy>? Kierownik;
         private IEnumerable<OrganizacjaLokalizacje>? LocalizationData;
         private static IEnumerable<OgolneWnioski>? WnioskiData;
         public IEnumerable<Holidays>? Holiday;
         private List<string?> ogolneStatusy;
         private List<ScheduleForm>? gridDataSource;
+        IEnumerable<ScheduleForm> DataSource;
         private bool ShowSchedule { get; set; } = true;
         private string SearchValue { get; set; }
         public ScheduleForm EventData { get; set; }
@@ -98,24 +99,30 @@
             this.Kierownik = await this.Kierownicy.GetAllAsync();
             this.ogolneStatusy = await this.ScheduleService.GetStatusAsync();
             this.signedInGroup = this.ScheduleService.GetSignedInGroups(userDetails?.SamAccountName);
+            this.DataSource = await this.ScheduleService.Get();
         }
 
         public async void OnRenderCell(RenderCellEventArgs args)
         {
             var item = args.Date;
             HolidaysDate holidays = new HolidaysDate();
-            bool exist = holidays.dateCollection.Any(d => d.Year == item.Year && d.Month == item.Month && d.Day == item.Day);
-            if (exist)
-            {
-                args.CssClasses = new List<string>(this.cellCustomClass);
-            }
+            bool isHoliday = holidays.dateCollection.Any(d => d.Year == item.Year && d.Month == item.Month && d.Day == item.Day);
+            bool isWeekend = args.Date.DayOfWeek == DayOfWeek.Sunday || args.Date.DayOfWeek == DayOfWeek.Saturday;
 
             if (args.ElementType == ElementType.WorkCells)
             {
-                if (args.Date.DayOfWeek == DayOfWeek.Sunday || args.Date.DayOfWeek == DayOfWeek.Saturday)
+                if (isHoliday || isWeekend)
+                {
+                    args.CssClasses = new List<string>(this.cellCustomClass);
+                }
+                else
                 {
                     args.CssClasses = new List<string>(this.customClass);
                 }
+            }
+            else if (isHoliday)
+            {
+                args.CssClasses = new List<string>(this.cellCustomClass);
             }
         }
 

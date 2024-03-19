@@ -1,0 +1,27 @@
+﻿@if (contentLoaded)
+{
+    @ChildContent
+}
+else
+{
+    <div style="position:absolute; top:30vh; width:100%; text-align:center">
+        <div style="display:flex; gap:10px; justify-content:center; align-items:center">
+            <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+            <p>Ładowanie...</p>
+        </div>
+    </div>
+}
+
+@code {
+
+    bool contentLoaded;
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(4000);
+        contentLoaded = true;
+    }
+}

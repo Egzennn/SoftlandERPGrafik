@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.102.2" />
     <PackageReference Include="ClosedXML.Extensions.Mvc" Version="0.4.0" />
+    <PackageReference Include="LdapForNet" Version="2.7.15" />
     <PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
     <PackageReference Include="Microsoft.Management.Infrastructure.Runtime.Win" Version="3.0.0" />
     <PackageReference Include="MudBlazor" Version="6.17.0" />

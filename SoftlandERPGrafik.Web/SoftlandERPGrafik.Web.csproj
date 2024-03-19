@@ -8,6 +8,7 @@
 
   
   <ItemGroup>
+    <PackageReference Include="LdapForNet" Version="2.7.15" />
     <PackageReference Include="MudBlazor" Version="6.17.0" />
   </ItemGroup>
   <ItemGroup>

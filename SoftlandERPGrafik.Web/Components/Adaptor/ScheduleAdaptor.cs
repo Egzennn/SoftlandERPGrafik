@@ -28,26 +28,26 @@ namespace SoftlandERPGrafik.Web.Components.Adaptor
                     List<int> locationIdList = locationIds.Select(id => Convert.ToInt32(id)).ToList();
                     var eventDataByLocationId = eventData.Where(e => locationIdList.Contains(e.LocationId ?? 0)).ToList();
 
-                    return dataManagerRequest.RequiresCounts ? new DataResult() : eventDataByLocationId;
+                    return dataManagerRequest.RequiresCounts ? new DataResult() : (object)eventDataByLocationId;
                 }
                 else if (@params.ContainsKey("RequestId") && @params["RequestId"] is IEnumerable<object> requestIds)
                 {
                     List<Guid> requestIdList = requestIds.Select(id => Guid.Parse(id.ToString())).ToList();
                     var eventDataFilteredByRequestId = eventData.Where(e => requestIdList.Contains(e.RequestId ?? Guid.Empty)).ToList();
 
-                    return dataManagerRequest.RequiresCounts ? new DataResult() : eventDataFilteredByRequestId;
+                    return dataManagerRequest.RequiresCounts ? new DataResult() : (object)eventDataFilteredByRequestId;
                 }
                 else if (@params.ContainsKey("Type") && @params["Type"] is IEnumerable<object> types)
                 {
                     List<string?> typeList = types.Select(type => type.ToString()).ToList();
                     var eventDataFilteredByType = eventData.Where(e => typeList.Contains(e.Type)).ToList();
 
-                    return dataManagerRequest.RequiresCounts ? new DataResult() : eventDataFilteredByType;
+                    return dataManagerRequest.RequiresCounts ? new DataResult() : (object)eventDataFilteredByType;
                 }
             }
 
             // Jeśli żadne specjalne filtry nie są używane, zwróć wszystkie dane
-            return dataManagerRequest.RequiresCounts ? new DataResult() : eventData;
+            return dataManagerRequest.RequiresCounts ? new DataResult() : (object)eventData;
         }
 
         //Performs Insert operation

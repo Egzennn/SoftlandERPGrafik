@@ -32,590 +32,596 @@
 
 <PageTitle>Harmonogram - SoftlandERP</PageTitle>
 
-<div class="schedule-overview">
-    <div class="">
-        <SfAppBar ColorMode="AppBarColor.Primary">
-            <span class="time e-icons e-clock"></span>
-            <span id="timeBtn" class="time current-time">@SystemTime.ToString("HH:mm:ss")</span>
-            <AppBarSpacer></AppBarSpacer>
-            <SfButton IconCss="e-icons e-print" CssClass="title-bar-btn e-inherit" id="printBtn" OnClick="OnPrintClick">Drukuj</SfButton>
-            <div class="control-panel">
-                <SfUploader AllowedExtensions=".ics" CssClass="calendar-import import-button" AllowMultiple="false">
-                    <UploaderButtons Browse="Import"></UploaderButtons>
-                    <UploaderEvents ValueChange="OnFileUploadChange"></UploaderEvents>
-                </SfUploader>
-            </div>
-            <div class="control-panel calendar-export">
-                <SfDropDownButton Content="Export" class="title-bar-btn e-inherit">
-                    <DropDownMenuItems>
-                        <DropDownMenuItem Text="iCalendar" IconCss="e-icons e-export"></DropDownMenuItem>
-                        <DropDownMenuItem Text="Grafik" IconCss="e-icons e-export-excel"></DropDownMenuItem>
-                        <DropDownMenuItem Text="Wnioski" IconCss="e-icons e-export-excel"></DropDownMenuItem>
-                    </DropDownMenuItems>
-                    <DropDownButtonEvents ItemSelected="OnExportClick"></DropDownButtonEvents>
-                </SfDropDownButton>
-            </div>
-            <SfButton IconCss="e-icons e-search" CssClass="overview-toolbar-settings e-inherit" IconPosition="IconPosition.Top" OnClick="OnSettingsClick"></SfButton>
-        </SfAppBar>
-        <SfToolbar Width="auto" CssClass="overview-toolbar" Height="70px" OverflowMode="OverflowMode.Scrollable" ScrollStep="100">
-            <ToolbarItems>
-                <ToolbarItem PrefixIcon="@(IsDzialyExpanded ? "e-icons e-chevron-down-small" : "e-icons e-chevron-right-small")"
-                             TooltipText="@(IsDzialyExpanded ? "Zwiń działy" : "Rozwiń działy")"
-                             Text="@(IsDzialyExpanded ? "Zwiń działy" : "Rozwiń działy")"
-                             OnClick="OnToggleDzialyButton"
-                             TabIndex=0></ToolbarItem>
-                <ToolbarItem PrefixIcon="e-icons e-plus" TooltipText="Nowe wydarzenie" Text="Nowe wydarzenie" OnClick="OnNewEventAdd" TabIndex=0></ToolbarItem>
-                <ToolbarItem PrefixIcon="e-icons e-repeat" TooltipText="Nowe wydarzenie cykliczne" Text="Nowe wydarzenie cykliczne" OnClick="OnNewRecurringEventAdd" TabIndex=0></ToolbarItem>
-                <ToolbarItem PrefixIcon="e-icons e-refresh" TooltipText="Odśwież" Text="Odśwież" OnClick="@(() => this.ScheduleRef.RefreshEventsAsync())" TabIndex="0"></ToolbarItem>
-                <ToolbarItem Type="@ItemType.Separator"></ToolbarItem>
-                <ToolbarItem PrefixIcon="e-icons e-day" TooltipText="Dzień" Text="Dzień" OnClick="() => OnViewButtonClick(View.TimelineDay)" TabIndex=0></ToolbarItem>
-                <ToolbarItem PrefixIcon="e-icons e-week" TooltipText="Tydzień" Text="Tydzień" OnClick="() => OnViewButtonClick(View.TimelineWeek)" TabIndex=0></ToolbarItem>
-                <ToolbarItem PrefixIcon="e-icons e-week" TooltipText="Tydzień pracy" Text="Tydzień pracy" OnClick="() => OnViewButtonClick(View.TimelineWorkWeek)" TabIndex=0></ToolbarItem>
-                <ToolbarItem PrefixIcon="e-icons e-month" TooltipText="Miesiąc" Text="Miesiąc" OnClick="() => OnViewButtonClick(View.TimelineMonth)" TabIndex=0></ToolbarItem>
-                <ToolbarItem PrefixIcon="e-icons e-month" TooltipText="Rok" Text="Rok" OnClick="() => OnViewButtonClick(View.TimelineYear)" TabIndex=0></ToolbarItem>
-                <ToolbarItem PrefixIcon="e-icons e-agenda-date-range" TooltipText="Agenda" Text="Agenda" OnClick="() => OnViewButtonClick(View.Agenda)" TabIndex=0></ToolbarItem>
-            </ToolbarItems>
-            <ToolbarEvents Created="OnToolbarCreated"></ToolbarEvents>
-        </SfToolbar>
-    </div>
-    <div class="overview-content">
-        <div class="left-panel">
-            <div>
-                <SfSchedule @ref="ScheduleRef" TValue="ScheduleForm" Width="100%" Height="650px" @bind-SelectedDate="@SelectedDate" @bind-CurrentView="@CurrentView" FirstDayOfWeek="@FirstDayOfWeek" EnableAutoRowHeight="@isRowAutoHeight" AllowDragAndDrop="false" AllowResizing="false">
-                    <ScheduleGroup Resources="@GroupData">
-                        <HeaderTooltipTemplate>
-                            @{
-                                var resourceData = (context as TemplateContext).ResourceData as OsobaData;
-                                var resourceDataDzial = (context as TemplateContext).ResourceData as ZatrudnieniDzialy;
-                                @if (resourceData != null && resourceDataDzial == null)
-                                {
-                                    <div class="resource-name">@(resourceData.Imie_Nazwisko)</div>
-                                }
-                                else
-                                {
-                                    <div class="resource-name">@(resourceDataDzial.DZL_Kod)</div>
-                                }
-                            }
-                        </HeaderTooltipTemplate>
-                    </ScheduleGroup>
-                    <ScheduleResources>
-                        <ScheduleResource TValue="int" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Query="@DepartmanetQuery" Field="DZL_DzlId" Title="Dzialy" Name="Dzialy" TextField="DZL_Kod" IdField="DZL_DzlId" GroupIDField="DZL_ParentId" ExpandedField="IsExpand"></ScheduleResource>
-                        <ScheduleResource TValue="int" TItem="OsobaData" DataSource="@Osoby" Query="@ResourceQuery" Field="PRI_PraId" Title="Osoby" Name="Osoby" TextField="Imie_Nazwisko" IdField="PRI_PraId" GroupIDField="DZL_DzlId"></ScheduleResource>
-                    </ScheduleResources>
-                    <ScheduleTimeScale Enable="@EnableTimeScale" Interval="@SlotInterval" SlotCount="@SlotCount"></ScheduleTimeScale>
-                    <ScheduleEvents TValue="ScheduleForm" EventRendered="OnEventRendered" OnRenderCell="OnRenderCell" OnPopupOpen="OnPopupOpen"></ScheduleEvents>
-                    <ScheduleEventSettings TValue="ScheduleForm" EnableTooltip="@TooltipEnable" Query="@LocalizationQuery">
-                        <ChildContent>
-                            <SfDataManager AdaptorInstance="@typeof(ScheduleAdaptor)" Adaptor="Adaptors.CustomAdaptor">
-                            </SfDataManager>
-                        </ChildContent>
-                        <TooltipTemplate>
-                            @{
-                                ScheduleForm data = (context as ScheduleForm);
-                                OgolneWnioski? wnioski = WnioskiData.FirstOrDefault(x => x.Id == data.RequestId);
-                                string wnioskiName = (wnioski != null) ? wnioski.Wartosc : data.RequestId.ToString();
-                                string formattedStartTime = data.StartTime.ToString(DateFormat, CultureInfo.CurrentCulture);
-                                string formattedEndTime = data.EndTime.AddDays(-1).ToString(DateFormat, CultureInfo.CurrentCulture);
-                                <div class="tooltip-wrap">
-                                    @if (data.Type == "Grafik")
+@if (this.Osoby != null && this.Dzialy != null)
+{
+    <div class="schedule-overview">
+        <div class="">
+            <SfAppBar ColorMode="AppBarColor.Primary">
+                <span class="time e-icons e-clock"></span>
+                <span id="timeBtn" class="time current-time">@SystemTime.ToString("HH:mm:ss")</span>
+                <AppBarSpacer></AppBarSpacer>
+                <SfButton IconCss="e-icons e-print" CssClass="title-bar-btn e-inherit" id="printBtn" OnClick="OnPrintClick">Drukuj</SfButton>
+                <div class="control-panel">
+                    <SfUploader AllowedExtensions=".ics" CssClass="calendar-import import-button" AllowMultiple="false">
+                        <UploaderButtons Browse="Import"></UploaderButtons>
+                        <UploaderEvents ValueChange="OnFileUploadChange"></UploaderEvents>
+                    </SfUploader>
+                </div>
+                <div class="control-panel calendar-export">
+                    <SfDropDownButton Content="Export" class="title-bar-btn e-inherit">
+                        <DropDownMenuItems>
+                            <DropDownMenuItem Text="iCalendar" IconCss="e-icons e-export"></DropDownMenuItem>
+                            <DropDownMenuItem Text="Grafik" IconCss="e-icons e-export-excel"></DropDownMenuItem>
+                            <DropDownMenuItem Text="Wnioski" IconCss="e-icons e-export-excel"></DropDownMenuItem>
+                        </DropDownMenuItems>
+                        <DropDownButtonEvents ItemSelected="OnExportClick"></DropDownButtonEvents>
+                    </SfDropDownButton>
+                </div>
+                <SfButton IconCss="e-icons e-search" CssClass="overview-toolbar-settings e-inherit" IconPosition="IconPosition.Top" OnClick="OnSettingsClick"></SfButton>
+            </SfAppBar>
+            <SfToolbar Width="auto" CssClass="overview-toolbar" Height="70px" OverflowMode="OverflowMode.Scrollable" ScrollStep="100">
+                <ToolbarItems>
+                    <ToolbarItem PrefixIcon="@(IsDzialyExpanded ? "e-icons e-chevron-down-small" : "e-icons e-chevron-right-small")"
+                                 TooltipText="@(IsDzialyExpanded ? "Zwiń działy" : "Rozwiń działy")"
+                                 Text="@(IsDzialyExpanded ? "Zwiń działy" : "Rozwiń działy")"
+                                 OnClick="OnToggleDzialyButton"
+                                 TabIndex=0></ToolbarItem>
+                    <ToolbarItem PrefixIcon="e-icons e-plus" TooltipText="Nowe wydarzenie" Text="Nowe wydarzenie" OnClick="OnNewEventAdd" TabIndex=0></ToolbarItem>
+                    <ToolbarItem PrefixIcon="e-icons e-repeat" TooltipText="Nowe wydarzenie cykliczne" Text="Nowe wydarzenie cykliczne" OnClick="OnNewRecurringEventAdd" TabIndex=0></ToolbarItem>
+                    <ToolbarItem PrefixIcon="e-icons e-refresh" TooltipText="Odśwież" Text="Odśwież" OnClick="@(() => this.ScheduleRef.RefreshEventsAsync())" TabIndex="0"></ToolbarItem>
+                    <ToolbarItem Type="@ItemType.Separator"></ToolbarItem>
+                    <ToolbarItem PrefixIcon="e-icons e-day" TooltipText="Dzień" Text="Dzień" OnClick="() => OnViewButtonClick(View.TimelineDay)" TabIndex=0></ToolbarItem>
+                    <ToolbarItem PrefixIcon="e-icons e-week" TooltipText="Tydzień" Text="Tydzień" OnClick="() => OnViewButtonClick(View.TimelineWeek)" TabIndex=0></ToolbarItem>
+                    <ToolbarItem PrefixIcon="e-icons e-week" TooltipText="Tydzień pracy" Text="Tydzień pracy" OnClick="() => OnViewButtonClick(View.TimelineWorkWeek)" TabIndex=0></ToolbarItem>
+                    <ToolbarItem PrefixIcon="e-icons e-month" TooltipText="Miesiąc" Text="Miesiąc" OnClick="() => OnViewButtonClick(View.TimelineMonth)" TabIndex=0></ToolbarItem>
+                    <ToolbarItem PrefixIcon="e-icons e-month" TooltipText="Rok" Text="Rok" OnClick="() => OnViewButtonClick(View.TimelineYear)" TabIndex=0></ToolbarItem>
+                    <ToolbarItem PrefixIcon="e-icons e-agenda-date-range" TooltipText="Agenda" Text="Agenda" OnClick="() => OnViewButtonClick(View.Agenda)" TabIndex=0></ToolbarItem>
+                </ToolbarItems>
+                <ToolbarEvents Created="OnToolbarCreated"></ToolbarEvents>
+            </SfToolbar>
+        </div>
+        <div class="overview-content">
+            <div class="left-panel">
+                <div>
+                    <SfSchedule @ref="ScheduleRef" TValue="ScheduleForm" Width="100%" Height="650px" @bind-SelectedDate="@SelectedDate" @bind-CurrentView="@CurrentView" FirstDayOfWeek="@FirstDayOfWeek" EnableAutoRowHeight="@isRowAutoHeight" AllowDragAndDrop="false" AllowResizing="false">
+                        <ScheduleGroup Resources="@GroupData">
+                            <HeaderTooltipTemplate>
+                                @{
+                                    var resourceData = (context as TemplateContext).ResourceData as OsobaData;
+                                    var resourceDataDzial = (context as TemplateContext).ResourceData as ZatrudnieniDzialy;
+                                    @if (resourceData != null && resourceDataDzial == null)
                                     {
-                                        if (data.Description != null)
-                                        {
-                                            <div class="content-area">
-                                                <div class="name">@data.Description</div>
-                                            </div>
-                                        }
-                                        else { }
+                                        <div class="resource-name">@(resourceData.Imie_Nazwisko)</div>
                                     }
                                     else
                                     {
-                                        <div class="name">@wnioskiName</div>
-                                        <div class="name">@($"{formattedStartTime} - {formattedEndTime}")</div>
+                                        <div class="resource-name">@(resourceDataDzial.DZL_Kod)</div>
                                     }
-                                </div>
-                            }
-                        </TooltipTemplate>
-                        <Template>
-                            @{
-                                ScheduleForm? data = (context as ScheduleForm);
-                                OrganizacjaLokalizacje? location = LocalizationData.FirstOrDefault(x => x.Lok_LokId == data.LocationId);
-                                string locationName = (location != null) ? location.Wartosc : data.LocationId.ToString();
-                                string formattedStartTimeGrafik = data.StartTime.ToString("HH:mm");
-                                string formattedEndTimeGrafik = data.EndTime.ToString("HH:mm");
-                                OgolneWnioski? wnioski = WnioskiData.FirstOrDefault(x => x.Id == data.RequestId);
-                                string wnioskiName = (wnioski != null) ? wnioski.Wartosc : data.RequestId.ToString();
-                                string formattedStartTimeWnioski = data.StartTime.ToString(DateFormat, CultureInfo.CurrentCulture);
-                                string formattedEndTimeWnioski = data.EndTime.AddDays(-1).ToString(DateFormat, CultureInfo.CurrentCulture);
-                                <div class='template-wrap'>
-
-                                    @if (data.Type == "Grafik")
-                                    {
-                                        if (LocalizationData != null)
+                                }
+                            </HeaderTooltipTemplate>
+                        </ScheduleGroup>
+                        <ScheduleResources>
+                            <ScheduleResource TValue="int" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Query="@DepartmanetQuery" Field="DZL_DzlId" Title="Dzialy" Name="Dzialy" TextField="DZL_Kod" IdField="DZL_DzlId" GroupIDField="DZL_ParentId" ExpandedField="IsExpand"></ScheduleResource>
+                            <ScheduleResource TValue="int" TItem="OsobaData" DataSource="@Osoby" Query="@ResourceQuery" Field="PRI_PraId" Title="Osoby" Name="Osoby" TextField="Imie_Nazwisko" IdField="PRI_PraId" GroupIDField="DZL_DzlId"></ScheduleResource>
+                        </ScheduleResources>
+                        <ScheduleTimeScale Enable="@EnableTimeScale" Interval="@SlotInterval" SlotCount="@SlotCount"></ScheduleTimeScale>
+                        <ScheduleEvents TValue="ScheduleForm" EventRendered="OnEventRendered" OnRenderCell="OnRenderCell" OnPopupOpen="OnPopupOpen"></ScheduleEvents>
+                        <ScheduleEventSettings TValue="ScheduleForm" EnableTooltip="@TooltipEnable" Query="@LocalizationQuery">
+                            <ChildContent>
+                                <SfDataManager AdaptorInstance="@typeof(ScheduleAdaptor)" Adaptor="Adaptors.CustomAdaptor">
+                                </SfDataManager>
+                            </ChildContent>
+                            <TooltipTemplate>
+                                @{
+                                    ScheduleForm data = (context as ScheduleForm);
+                                    OgolneWnioski? wnioski = WnioskiData.FirstOrDefault(x => x.Id == data.RequestId);
+                                    string wnioskiName = (wnioski != null) ? wnioski.Wartosc : data.RequestId.ToString();
+                                    string formattedStartTime = data.StartTime.ToString(DateFormat, CultureInfo.CurrentCulture);
+                                    string formattedEndTime = data.EndTime.AddDays(-1).ToString(DateFormat, CultureInfo.CurrentCulture);
+                                    <div class="tooltip-wrap">
+                                        @if (data.Type == "Grafik")
                                         {
-                                            @if (data.IsAllDay)
+                                            if (data.Description != null)
                                             {
-                                                <div class="cell-info">Cały dzień</div>
+                                                <div class="content-area">
+                                                    <div class="name">@data.Description</div>
+                                                </div>
+                                            }
+                                            else { }
+                                        }
+                                        else
+                                        {
+                                            <div class="name">@wnioskiName</div>
+                                            <div class="name">@($"{formattedStartTime} - {formattedEndTime}")</div>
+                                        }
+                                    </div>
+                                }
+                            </TooltipTemplate>
+                            <Template>
+                                @{
+                                    ScheduleForm? data = (context as ScheduleForm);
+                                    OrganizacjaLokalizacje? location = LocalizationData.FirstOrDefault(x => x.Lok_LokId == data.LocationId);
+                                    string locationName = (location != null) ? location.Wartosc : data.LocationId.ToString();
+                                    string formattedStartTimeGrafik = data.StartTime.ToString("HH:mm");
+                                    string formattedEndTimeGrafik = data.EndTime.ToString("HH:mm");
+                                    OgolneWnioski? wnioski = WnioskiData.FirstOrDefault(x => x.Id == data.RequestId);
+                                    string wnioskiName = (wnioski != null) ? wnioski.Wartosc : data.RequestId.ToString();
+                                    string formattedStartTimeWnioski = data.StartTime.ToString(DateFormat, CultureInfo.CurrentCulture);
+                                    string formattedEndTimeWnioski = data.EndTime.AddDays(-1).ToString(DateFormat, CultureInfo.CurrentCulture);
+                                    <div class='template-wrap'>
+
+                                        @if (data.Type == "Grafik")
+                                        {
+                                            if (LocalizationData != null)
+                                            {
+                                                @if (data.IsAllDay)
+                                                {
+                                                    <div class="cell-info">Cały dzień</div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="cell-info">@($"{formattedStartTimeGrafik} - {formattedEndTimeGrafik}")</div>
+                                                }
+                                                <div class="cell-info">@locationName</div>
                                             }
                                             else
                                             {
-                                                <div class="cell-info">@($"{formattedStartTimeGrafik} - {formattedEndTimeGrafik}")</div>
+                                                <p>Loading...</p>
                                             }
-                                            <div class="cell-info">@locationName</div>
                                         }
                                         else
                                         {
-                                            <p>Loading...</p>
+                                            <div class="cell-info">@($"{formattedStartTimeWnioski} - {formattedEndTimeWnioski}")</div>
+                                            <div class="cell-info">@wnioskiName</div>
+                                        }
+                                    </div>
+
+                                }
+                            </Template>
+                        </ScheduleEventSettings>
+                        <ScheduleViews>
+                            <ScheduleView Option="View.Agenda"></ScheduleView>
+                            <ScheduleView Option="View.TimelineDay"></ScheduleView>
+                            <ScheduleView Option="View.TimelineWeek"></ScheduleView>
+                            <ScheduleView Option="View.TimelineWorkWeek"></ScheduleView>
+                            <ScheduleView Option="View.TimelineMonth"></ScheduleView>
+                            <ScheduleView Option="View.TimelineYear"></ScheduleView>
+                        </ScheduleViews>
+                        <ScheduleQuickInfoTemplates>
+                            <HeaderTemplate>
+                                @{
+                                    ScheduleForm Data = (context as ScheduleForm);
+                                }
+                                <div class="e-header-icon-wrapper">
+                                    <SfButton OnClick="PopupClose" Title="Close" IconCss="e-icons e-close-icon e-btn-icon" CssClass="e-control e-btn e-lib e-close e-flat e-round e-small e-icon-btn"></SfButton>
+                                </div>
+                                <div class="e-subject-wrap">
+                                    <div class="e-subject e-text-ellipsis" style="background: @Data.Color); background-image: @Data.Style)">
+                                        <div class="quick-info-title">
+                                            @((Data.CreatedBy == null) ? "Dodaj" : Data.Type)
+                                        </div>
+                                    </div>
+                                </div>
+                            </HeaderTemplate>
+                            <ContentTemplate>
+                                @{
+                                    ScheduleForm Data = (context as ScheduleForm);
+                                    if (Data.CreatedBy == null)
+                                    {
+                                        if (isCreated)
+                                        {
+                                            Task.Run(async () => await SetFocus());
                                         }
                                     }
                                     else
                                     {
-                                        <div class="cell-info">@($"{formattedStartTimeWnioski} - {formattedEndTimeWnioski}")</div>
-                                        <div class="cell-info">@wnioskiName</div>
-                                    }
-                                </div>
-
-                            }
-                        </Template>
-                    </ScheduleEventSettings>
-                    <ScheduleViews>
-                        <ScheduleView Option="View.Agenda"></ScheduleView>
-                        <ScheduleView Option="View.TimelineDay"></ScheduleView>
-                        <ScheduleView Option="View.TimelineWeek"></ScheduleView>
-                        <ScheduleView Option="View.TimelineWorkWeek"></ScheduleView>
-                        <ScheduleView Option="View.TimelineMonth"></ScheduleView>
-                        <ScheduleView Option="View.TimelineYear"></ScheduleView>
-                    </ScheduleViews>
-                    <ScheduleQuickInfoTemplates>
-                        <HeaderTemplate>
-                            @{
-                                ScheduleForm Data = (context as ScheduleForm);
-                            }
-                            <div class="e-header-icon-wrapper">
-                                <SfButton OnClick="PopupClose" Title="Close" IconCss="e-icons e-close-icon e-btn-icon" CssClass="e-control e-btn e-lib e-close e-flat e-round e-small e-icon-btn"></SfButton>
-                            </div>
-                            <div class="e-subject-wrap">
-                                <div class="e-subject e-text-ellipsis" style="background: @Data.Color); background-image: @Data.Style)">
-                                    <div class="quick-info-title">
-                                        @((Data.CreatedBy == null) ? "Dodaj" : Data.Type)
-                                    </div>
-                                </div>
-                            </div>
-                        </HeaderTemplate>
-                        <ContentTemplate>
-                            @{
-                                ScheduleForm Data = (context as ScheduleForm);
-                                if (Data.CreatedBy == null)
-                                {
-                                    if (isCreated)
-                                    {
-                                        Task.Run(async () => await SetFocus());
-                                    }
-                                }
-                                else
-                                {
-                                    <div class="e-popup-content">
-                                        <div class="e-date-time">
-                                            <div class="e-date-time-icon e-icons"></div>
-                                            <div class="e-date-time-wrapper e-text-ellipsis">
-                                                <div class="e-date-time-details e-text-ellipsis">@(GetEventDetails(Data))</div>
+                                        <div class="e-popup-content">
+                                            <div class="e-date-time">
+                                                <div class="e-date-time-icon e-icons"></div>
+                                                <div class="e-date-time-wrapper e-text-ellipsis">
+                                                    <div class="e-date-time-details e-text-ellipsis">@(GetEventDetails(Data))</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        @if (Data.Description != null)
-                                        {
-                                            <div class="e-description">
-                                                <div class="e-description-icon e-icons"></div>
-                                                <div class="e-description-details e-text-ellipsis">@(Data.Description)</div>
-                                            </div>
-                                        }
-                                        @if (Data.Type == "Grafik")
-                                        {
-                                            <div class="e-location">
-                                                <div class="e-location-icon e-icons"></div>
-                                                <div class="e-location-details e-text-ellipsis">@((Data.LocationId != 0) ? LocalizationData.FirstOrDefault(item => item.Lok_LokId.Equals(Data.LocationId))?.Wartosc : "")</div>
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <div class="e-location">
-                                                <div class="e-export-pdf e-icons new"></div>
-                                                <div class="e-location-details e-text-ellipsis">@((Data.RequestId != Guid.Empty) ? WnioskiData.FirstOrDefault(item => item.Id.Equals(Data.RequestId))?.Wartosc : "")</div>
-                                            </div>
-                                            @if (Data.IDS != null)
+                                            @if (Data.Description != null)
                                             {
                                                 <div class="e-description">
-                                                    <div class="e-page-numbering e-icons new"></div>
-                                                    <div class="e-description-details e-text-ellipsis">@(Data.IDS)</div>
+                                                    <div class="e-description-icon e-icons"></div>
+                                                    <div class="e-description-details e-text-ellipsis">@(Data.Description)</div>
                                                 </div>
-
                                             }
-                                        }
-                                    </div>
-                                }
-                            }
-                        </ContentTemplate>
-                        <FooterTemplate>
-                            @{
-                                ScheduleForm Data = (context as ScheduleForm);
-                                var isReadOnly = Data?.IsReadonly ?? false;
-                                var isAddMode = (Data?.CreatedBy == null);
-                                var priPraId = Data?.PRI_PraId;
-                                var isAuthorized = IsCurrentUserAuthorized(priPraId);
-                                var dzlDzlId = Data?.DZL_DzlId;
-                                var isAuthorizedManager = DepartmentManagerCRUD();
-                                var startTime = Data?.StartTime;
-                                var disableStateReadOnly = false;
-                                var disableStateAdd = false;
-                                if (signedInGroup.Contains("S_ADM_IT"))
-                                {
-                                    isAuthorizedManager = Data?.DZL_DzlId;
-                                }
-                            }
-                            <div class="cell-footer">
-                                @if (priPraId != 0 && ((isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))
-                                || (!isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))))
-                                {
-                                    @if (isAddMode)
-                                    {
-                                        var todayDate = DateTime.Now.Date;
-                                        var startTimeDate = startTime?.Date;
-
-                                        disableStateAdd = !(startTimeDate.HasValue && startTimeDate.Value >= todayDate);
-
-                                        <SfButton Content="Dodaj" OnClick="@(e => OnMoreDetailsClick(e, Data, false))" Disabled="@disableStateAdd" />
-                                    }
-                                    else
-                                    {
-                                        disableStateReadOnly = isReadOnly ? true : false;
-
-                                        <SfButton CssClass="e-event-edit" Content="Edycja"
-                                                  OnClick="@(e => OnMoreDetailsClick(e, Data, true))" Disabled="@disableStateReadOnly" />
-                                        @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
-                                        {
-                                            <SfButton CssClass="e-event-delete" Content="Usuń" OnClick="@(e => OnDelete(Data))" Disabled="@disableStateReadOnly" />
-                                        }
-                                    }
-                                }
-                            </div>
-                        </FooterTemplate>
-                    </ScheduleQuickInfoTemplates>
-                    <ScheduleTemplates>
-                        <CellTemplate>
-                            <div class="templatewrap">
-                                @{
-                                    var today = (context as TemplateContext).Date;
-                                    var todayHoliday = this.Holiday?.FirstOrDefault(h => h.Rok == today.Year && h.Mies == today.Month && h.Dzien == today.Day);
-                                    if (todayHoliday != null)
-                                    {
-                                        <div class="caption">@todayHoliday.Nazwa</div>
-                                    }
-                                }
-                            </div>
-                        </CellTemplate>
-                        <ResourceHeaderTemplate>
-                            @{
-                                var resourceData = (context as TemplateContext).ResourceData as OsobaData;
-                                var resourceDataDzial = (context as TemplateContext).ResourceData as ZatrudnieniDzialy;
-
-                                @if (resourceData != null && resourceDataDzial == null)
-                                {
-                                    <div style="margin-left: 25px;">
-                                        <div class="e-text-ellipsis e-resource-text">@(resourceData.Imie_Nazwisko)</div>
-                                        @{
-                                            var adUserInfo = GetADUserInfo(resourceData.PRI_Opis);
-                                            if (adUserInfo != null)
+                                            @if (Data.Type == "Grafik")
                                             {
-                                                <div class="e-text-ellipsis e-resource-text">@adUserInfo.ToString()</div>
+                                                <div class="e-location">
+                                                    <div class="e-location-icon e-icons"></div>
+                                                    <div class="e-location-details e-text-ellipsis">@((Data.LocationId != 0) ? LocalizationData.FirstOrDefault(item => item.Lok_LokId.Equals(Data.LocationId))?.Wartosc : "")</div>
+                                                </div>
                                             }
-                                        }
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="e-text-ellipsis e-resource-text">@(resourceDataDzial.DZL_Kod)</div>
-                                }
-                            }
-                        </ResourceHeaderTemplate>
-                        <DateHeaderTemplate>
-                            <div class="date-text">@(((context as TemplateContext).Date).ToString("dd", CultureInfo.CurrentCulture))</div>
-                            <div class="date-text">@(((context as TemplateContext).Date).ToString("ddd", CultureInfo.CurrentCulture))</div>
-                        </DateHeaderTemplate>
-                        <EditorHeaderTemplate>
-                            @{
-                                ScheduleForm Data = (context as ScheduleForm);
-                                var osobaData = GetOsobaDataByDzlId(Data.PRI_PraId);
-                            }
-                            @if (Data.CreatedBy == null)
-                            {
-                                <div>Dodaj grafik pracy dla @osobaData.Imie_Nazwisko</div>
-                            }
-                            else
-                            {
-                                <div>Edytuj grafik pracy dla @osobaData.Imie_Nazwisko</div>
-                            }
-                        </EditorHeaderTemplate>
-                        <EditorTemplate>
-                            @{
-                                var Data = (context as ScheduleForm);
-                                var isAuthorizedManager = DepartmentManagerCRUD();
-                                bool isManager = this.Kierownik.Any(o => o.PRI_Opis == this.userDetails?.SamAccountName);
-                                if (signedInGroup.Contains("S_ADM_IT"))
-                                {
-                                    enableStateA = true;
-                                    enableStateB = true;
-                                }
-                                else if (signedInGroup.Contains("S_ADM_KADRY"))
-                                {
-                                    enableStateB = true;
-                                }
-                                else if (isManager)
-                                {
-                                    enableStateA = true;
-                                }
-                            }
-                            <div class="e-dialog-parent">
-                                <table class="custom-event-editor" width="100%" cellpadding="5" style="padding-bottom: 14px">
-                                    <tbody>
-                                        <tr>
-                                            <td>
-                                                <div class="e-type-row">
-                                                    <div class="e-texttd">Typ</div>
-                                                    <div>
-                                                        <SfDropDownList ID="TypeEventType" DataSource="@Type" @bind-Value="@(Data.Type)">
-                                                            <DropDownListFieldSettings Value="Wartosc" Text="Wartosc"></DropDownListFieldSettings>
-                                                        </SfDropDownList>
-                                                        <ValidationMessage For="()=>(Data.Type)" />
-                                                    </div>
+                                            else
+                                            {
+                                                <div class="e-location">
+                                                    <div class="e-export-pdf e-icons new"></div>
+                                                    <div class="e-location-details e-text-ellipsis">@((Data.RequestId != Guid.Empty) ? WnioskiData.FirstOrDefault(item => item.Id.Equals(Data.RequestId))?.Wartosc : "")</div>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                        @if (Data.Type == "Grafik")
+                                                @if (Data.IDS != null)
+                                                {
+                                                    <div class="e-description">
+                                                        <div class="e-page-numbering e-icons new"></div>
+                                                        <div class="e-description-details e-text-ellipsis">@(Data.IDS)</div>
+                                                    </div>
+
+                                                }
+                                            }
+                                        </div>
+                                    }
+                                }
+                            </ContentTemplate>
+                            <FooterTemplate>
+                                @{
+                                    ScheduleForm Data = (context as ScheduleForm);
+                                    var isReadOnly = Data?.IsReadonly ?? false;
+                                    var isAddMode = (Data?.CreatedBy == null);
+                                    var priPraId = Data?.PRI_PraId;
+                                    var isAuthorized = IsCurrentUserAuthorized(priPraId);
+                                    var dzlDzlId = Data?.DZL_DzlId;
+                                    var isAuthorizedManager = DepartmentManagerCRUD();
+                                    var startTime = Data?.StartTime;
+                                    var disableStateReadOnly = false;
+                                    var disableStateAdd = false;
+                                    if (signedInGroup.Contains("S_ADM_IT") || signedInGroup.Contains("S_ADM_KADRY"))
+                                    {
+                                        isAuthorizedManager = Data?.DZL_DzlId;
+                                    }
+                                    if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
+                                    {
+                                        disableStateAdd = true;
+                                    }
+                                }
+                                <div class="cell-footer">
+                                    @if (priPraId != 0 && ((isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))
+                                   || (!isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))))
+                                    {
+                                        @if (isAddMode)
                                         {
-                                            <tr>
-                                                <td>
-                                                    <div class="e-all-day-time-zone-row">
-                                                        <div class="e-texttd">Cały dzień</div>
-                                                        <div class="checkbox-container">
-                                                            <SfCheckBox TValue="bool" @bind-Checked="@Data.IsAllDay" />
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        }
-                                        <tr>
-                                            <td>
-                                                <div class="e-start-end-row">
-                                                    <div class="e-texttd">Czas trwania</div>
-                                                    <div class="e-start-container">
-                                                        @if (!Data.IsAllDay && Data.Type == "Grafik")
-                                                        {
-                                                            <SfTimePicker @bind-Value="Data.StartTime"></SfTimePicker>
-                                                        }
-                                                        else
-                                                        {
-                                                            <SfDatePicker @bind-Value="Data.StartTime"></SfDatePicker>
-                                                        }
-                                                    </div>
-                                                    <span class="e-arrow-container">
-                                                        <svg width="16" height="16" viewBox="0 0 32 32" fill="#7D90AB" xmlns="http://www.w3.org/2000/svg" class="css-f81u39">
-                                                            <path d="M21.2913 8.76378L27.5276 15C27.811 15.2835 28 15.7559 28 16.1339C28 16.6063 27.811 16.9843 27.5276 17.2677L21.2913 23.5039C20.6299 24.1654 19.5906 24.1654 18.9291 23.5039C18.2677 22.8425 18.2677 21.8031 18.9291 21.1417L22.3307 17.7402H5.70079C4.75591 17.8346 4 17.0787 4 16.1339C4 15.189 4.75591 14.4331 5.70079 14.4331L22.4252 14.4331L19.0236 11.0315C18.3622 10.3701 18.3622 9.33071 19.0236 8.66929C19.5906 8.10236 20.7244 8.10236 21.2913 8.76378Z" fill="inherit"></path>
-                                                        </svg>
-                                                    </span>
-                                                    <div class="e-end-container">
-                                                        @if (!Data.IsAllDay && Data.Type == "Grafik")
-                                                        {
-                                                            <SfTimePicker @bind-Value="Data.EndTime" Min="Data.StartTime"></SfTimePicker>
-                                                        }
-                                                        else
-                                                        {
-                                                            <SfDatePicker @bind-Value="Data.EndTime" Min="Data.StartTime"></SfDatePicker>
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        @if (Data.Type == "Grafik")
-                                        {
-                                            <tr>
-                                                <td>
-                                                    <div class="e-location-row">
-                                                        <div class="e-texttd">Stanowisko pracy</div>
-                                                        <div>
-                                                            <SfDropDownList ID="LocationEventType" DataSource="@LocalizationData" Placeholder="Wybierz stanowisko pracy" @bind-Value="@(Data.LocationId)">
-                                                                <DropDownListFieldSettings Value="Lok_LokId" Text="Wartosc"></DropDownListFieldSettings>
-                                                            </SfDropDownList>
-                                                            <ValidationMessage For="()=>(Data.LocationId)" />
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <div class="e-recurrenceeditor">
-                                                        <div>
-                                                            <SfRecurrenceEditor @bind-Value="@(Data.RecurrenceRule)"></SfRecurrenceEditor>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
+                                            var todayDate = DateTime.Now.Date;
+                                            var startTimeDate = startTime?.Date;
+
+                                            disableStateAdd = !(startTimeDate.HasValue && startTimeDate.Value >= todayDate);
+
+                                            <SfButton Content="Dodaj" OnClick="@(e => OnMoreDetailsClick(e, Data, false))" Disabled="@disableStateAdd" />
                                         }
                                         else
                                         {
-                                            <tr>
-                                                <td>
-                                                    <div class="e-form-row">
-                                                        <div class="e-texttd">IDS</div>
-                                                        <div>
-                                                            <SfTextBox @bind-Value="@(Data.IDS)"></SfTextBox>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <div class="e-form-row">
-                                                        <div class="e-texttd">IDD</div>
-                                                        <div>
-                                                            <SfTextBox @bind-Value="@(Data.IDD)"></SfTextBox>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <div class="e-location-row">
-                                                        <div class="e-texttd">Typ wniosku</div>
-                                                        <div>
-                                                            <SfDropDownList ID="RequestEventType" DataSource="@WnioskiData" Placeholder="Wybierz wniosek" @bind-Value="@(Data.RequestId)">
-                                                                <DropDownListFieldSettings Value="Id" Text="Wartosc"></DropDownListFieldSettings>
-                                                            </SfDropDownList>
-                                                            <ValidationMessage For="()=>(Data.RequestId)" />
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <div class="e-form-row">
-                                                        <div class="e-texttd">Wniosek</div>
-                                                        <div>
-                                                            <SfUploader AllowMultiple="false" AutoUpload="true" AllowedExtensions=".doc, .docx, .pdf">
-                                                                <UploaderEvents ValueChange="@OnChangeUpload" OnRemove="@OnRemoveUpload"></UploaderEvents>
-                                                            </SfUploader>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
+                                            disableStateReadOnly = isReadOnly ? true : false;
+
+                                            <SfButton CssClass="e-event-edit" Content="Edycja"
+                                                      OnClick="@(e => OnMoreDetailsClick(e, Data, true))" Disabled="@disableStateReadOnly" />
+                                            @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
+                                            {
+                                                <SfButton CssClass="e-event-delete" Content="Usuń" OnClick="@(e => OnDelete(Data))" Disabled="@disableStateReadOnly" />
+                                            }
                                         }
-                                        <tr>
-                                            <td>
-                                                <div class="e-description-row">
-                                                    <div class="e-texttd">Notatka</div>
-                                                    <div>
-                                                        <SfTextBox Multiline="true" @bind-Value="@(Data.Description)"></SfTextBox>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        @if (Data.Stan != null || isManager || (signedInGroup.Contains("S_ADM_IT") || signedInGroup.Contains("S_ADM_KADRY")))
+                                    }
+                                </div>
+                            </FooterTemplate>
+                        </ScheduleQuickInfoTemplates>
+                        <ScheduleTemplates>
+                            <CellTemplate>
+                                <div class="templatewrap">
+                                    @{
+                                        var today = (context as TemplateContext).Date;
+                                        var todayHoliday = this.Holiday?.FirstOrDefault(h => h.Rok == today.Year && h.Mies == today.Month && h.Dzien == today.Day);
+                                        if (todayHoliday != null)
                                         {
+                                            <div class="caption">@todayHoliday.Nazwa</div>
+                                        }
+                                    }
+                                </div>
+                            </CellTemplate>
+                            <ResourceHeaderTemplate>
+                                @{
+                                    var resourceData = (context as TemplateContext).ResourceData as OsobaData;
+                                    var resourceDataDzial = (context as TemplateContext).ResourceData as ZatrudnieniDzialy;
+
+                                    @if (resourceData != null && resourceDataDzial == null)
+                                    {
+                                        <div style="margin-left: 25px;">
+                                            <div class="e-text-ellipsis e-resource-text">@(resourceData.Imie_Nazwisko)</div>
+                                            @{
+                                                var adUserInfo = GetADUserInfo(resourceData.PRI_Opis);
+                                                if (adUserInfo != null)
+                                                {
+                                                    <div class="e-text-ellipsis e-resource-text">@adUserInfo.ToString()</div>
+                                                }
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="e-text-ellipsis e-resource-text">@(resourceDataDzial.DZL_Kod)</div>
+                                    }
+                                }
+                            </ResourceHeaderTemplate>
+                            <DateHeaderTemplate>
+                                <div class="date-text">@(((context as TemplateContext).Date).ToString("dd", CultureInfo.CurrentCulture))</div>
+                                <div class="date-text">@(((context as TemplateContext).Date).ToString("ddd", CultureInfo.CurrentCulture))</div>
+                            </DateHeaderTemplate>
+                            <EditorHeaderTemplate>
+                                @{
+                                    ScheduleForm Data = (context as ScheduleForm);
+                                    var osobaData = GetOsobaDataByDzlId(Data.PRI_PraId);
+                                }
+                                @if (Data.CreatedBy == null)
+                                {
+                                    <div>Dodaj grafik pracy dla @osobaData.Imie_Nazwisko</div>
+                                }
+                                else
+                                {
+                                    <div>Edytuj grafik pracy dla @osobaData.Imie_Nazwisko</div>
+                                }
+                            </EditorHeaderTemplate>
+                            <EditorTemplate>
+                                @{
+                                    var Data = (context as ScheduleForm);
+                                    var isAuthorizedManager = DepartmentManagerCRUD();
+                                    bool isManager = this.Kierownik.Any(o => o.PRI_Opis == this.userDetails?.SamAccountName);
+                                    if (signedInGroup.Contains("S_ADM_IT"))
+                                    {
+                                        enableStateA = true;
+                                        enableStateB = true;
+                                    }
+                                    else if (signedInGroup.Contains("S_ADM_KADRY"))
+                                    {
+                                        enableStateB = true;
+                                    }
+                                    else if (isManager)
+                                    {
+                                        enableStateA = true;
+                                    }
+                                }
+                                <div class="e-dialog-parent">
+                                    <table class="custom-event-editor" width="100%" cellpadding="5" style="padding-bottom: 14px">
+                                        <tbody>
                                             <tr>
                                                 <td>
-                                                    <div class="e-location-row">
-                                                        <div class="e-texttd">Status wniosku Kierownika</div>
+                                                    <div class="e-type-row">
+                                                        <div class="e-texttd">Typ</div>
                                                         <div>
-                                                            <SfDropDownList ID="StanEventType" DataSource="@ogolneStatusy" @bind-Value="@Data.Stan" Enabled="@enableStateA">
+                                                            <SfDropDownList ID="TypeEventType" DataSource="@Type" @bind-Value="@(Data.Type)">
                                                                 <DropDownListFieldSettings Value="Wartosc" Text="Wartosc"></DropDownListFieldSettings>
                                                             </SfDropDownList>
+                                                            <ValidationMessage For="()=>(Data.Type)" />
                                                         </div>
                                                     </div>
-                                                    @if (Data.Type == "Wniosek")
-                                                    {
+                                                </td>
+                                            </tr>
+                                            @if (Data.Type == "Grafik")
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <div class="e-all-day-time-zone-row">
+                                                            <div class="e-texttd">Cały dzień</div>
+                                                            <div class="checkbox-container">
+                                                                <SfCheckBox TValue="bool" @bind-Checked="@Data.IsAllDay" />
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                            <tr>
+                                                <td>
+                                                    <div class="e-start-end-row">
+                                                        <div class="e-texttd">Czas trwania</div>
+                                                        <div class="e-start-container">
+                                                            @if (!Data.IsAllDay && Data.Type == "Grafik")
+                                                            {
+                                                                <SfTimePicker @bind-Value="Data.StartTime"></SfTimePicker>
+                                                            }
+                                                            else
+                                                            {
+                                                                <SfDatePicker @bind-Value="Data.StartTime"></SfDatePicker>
+                                                            }
+                                                        </div>
+                                                        <span class="e-arrow-container">
+                                                            <svg width="16" height="16" viewBox="0 0 32 32" fill="#7D90AB" xmlns="http://www.w3.org/2000/svg" class="css-f81u39">
+                                                                <path d="M21.2913 8.76378L27.5276 15C27.811 15.2835 28 15.7559 28 16.1339C28 16.6063 27.811 16.9843 27.5276 17.2677L21.2913 23.5039C20.6299 24.1654 19.5906 24.1654 18.9291 23.5039C18.2677 22.8425 18.2677 21.8031 18.9291 21.1417L22.3307 17.7402H5.70079C4.75591 17.8346 4 17.0787 4 16.1339C4 15.189 4.75591 14.4331 5.70079 14.4331L22.4252 14.4331L19.0236 11.0315C18.3622 10.3701 18.3622 9.33071 19.0236 8.66929C19.5906 8.10236 20.7244 8.10236 21.2913 8.76378Z" fill="inherit"></path>
+                                                            </svg>
+                                                        </span>
+                                                        <div class="e-end-container">
+                                                            @if (!Data.IsAllDay && Data.Type == "Grafik")
+                                                            {
+                                                                <SfTimePicker @bind-Value="Data.EndTime" Min="Data.StartTime"></SfTimePicker>
+                                                            }
+                                                            else
+                                                            {
+                                                                <SfDatePicker @bind-Value="Data.EndTime" Min="Data.StartTime"></SfDatePicker>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            @if (Data.Type == "Grafik")
+                                            {
+                                                <tr>
+                                                    <td>
                                                         <div class="e-location-row">
-                                                            <div class="e-texttd">Status wniosku ASE</div>
+                                                            <div class="e-texttd">Stanowisko pracy</div>
                                                             <div>
-                                                                <SfDropDownList ID="StatusEventType" DataSource="@ogolneStatusy" @bind-Value="@(Data.Status)" Enabled="@enableStateB">
+                                                                <SfDropDownList ID="LocationEventType" DataSource="@LocalizationData" Placeholder="Wybierz stanowisko pracy" @bind-Value="@(Data.LocationId)">
+                                                                    <DropDownListFieldSettings Value="Lok_LokId" Text="Wartosc"></DropDownListFieldSettings>
+                                                                </SfDropDownList>
+                                                                <ValidationMessage For="()=>(Data.LocationId)" />
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <div class="e-recurrenceeditor">
+                                                            <div>
+                                                                <SfRecurrenceEditor @bind-Value="@(Data.RecurrenceRule)"></SfRecurrenceEditor>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                            else
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <div class="e-form-row">
+                                                            <div class="e-texttd">IDS</div>
+                                                            <div>
+                                                                <SfTextBox @bind-Value="@(Data.IDS)"></SfTextBox>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <div class="e-form-row">
+                                                            <div class="e-texttd">IDD</div>
+                                                            <div>
+                                                                <SfTextBox @bind-Value="@(Data.IDD)"></SfTextBox>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <div class="e-location-row">
+                                                            <div class="e-texttd">Typ wniosku</div>
+                                                            <div>
+                                                                <SfDropDownList ID="RequestEventType" DataSource="@WnioskiData" Placeholder="Wybierz wniosek" @bind-Value="@(Data.RequestId)">
+                                                                    <DropDownListFieldSettings Value="Id" Text="Wartosc"></DropDownListFieldSettings>
+                                                                </SfDropDownList>
+                                                                <ValidationMessage For="()=>(Data.RequestId)" />
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <div class="e-form-row">
+                                                            <div class="e-texttd">Wniosek</div>
+                                                            <div>
+                                                                <SfUploader AllowMultiple="false" AutoUpload="true" AllowedExtensions=".doc, .docx, .pdf">
+                                                                    <UploaderEvents ValueChange="@OnChangeUpload" OnRemove="@OnRemoveUpload"></UploaderEvents>
+                                                                </SfUploader>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                            <tr>
+                                                <td>
+                                                    <div class="e-description-row">
+                                                        <div class="e-texttd">Notatka</div>
+                                                        <div>
+                                                            <SfTextBox Multiline="true" @bind-Value="@(Data.Description)"></SfTextBox>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            @if (Data.Stan != null || isManager || (signedInGroup.Contains("S_ADM_IT") || signedInGroup.Contains("S_ADM_KADRY")))
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <div class="e-location-row">
+                                                            <div class="e-texttd">Status wniosku Kierownika</div>
+                                                            <div>
+                                                                <SfDropDownList ID="StanEventType" DataSource="@ogolneStatusy" @bind-Value="@Data.Stan" Enabled="@enableStateA">
                                                                     <DropDownListFieldSettings Value="Wartosc" Text="Wartosc"></DropDownListFieldSettings>
                                                                 </SfDropDownList>
                                                             </div>
                                                         </div>
-                                                    }
-                                                </td>
-                                            </tr>
+                                                        @if (Data.Type == "Wniosek")
+                                                        {
+                                                            <div class="e-location-row">
+                                                                <div class="e-texttd">Status wniosku ASE</div>
+                                                                <div>
+                                                                    <SfDropDownList ID="StatusEventType" DataSource="@ogolneStatusy" @bind-Value="@(Data.Status)" Enabled="@enableStateB">
+                                                                        <DropDownListFieldSettings Value="Wartosc" Text="Wartosc"></DropDownListFieldSettings>
+                                                                    </SfDropDownList>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </EditorTemplate>
+                        </ScheduleTemplates>
+                    </SfSchedule>
+                    <div id="dialog">
+                        <SfDialog IsModal="true" Header="@headerEdit" Width="285px" Height="170px" ShowCloseIcon="true" @bind-Visible="VisibilityEdit">
+                            <DialogTemplates>
+                                <Content>Co chcesz edytować?</Content>
+                            </DialogTemplates>
+                            <DialogButtons>
+                                <DialogButton Content="Wydarzenie" IsPrimary="true" OnClick="@EditOccurrence" />
+                                <DialogButton Content="Całą seria" OnClick="@EditSeries" />
+                            </DialogButtons>
+                        </SfDialog>
+                        <SfDialog IsModal="true" Header="@headerDeleteSeries" Width="285px" Height="170px" ShowCloseIcon="true" @bind-Visible="VisibilityDeleteSeries">
+                            <DialogTemplates>
+                                <Content>Co chcesz usunąć?</Content>
+                            </DialogTemplates>
+                            <DialogButtons>
+                                <DialogButton Content="Wydarzenie w serii" IsPrimary="true" OnClick="@DeleteOccurrence" />
+                                <DialogButton Content="Całą serie" OnClick="@DeleteSeries" />
+                            </DialogButtons>
+                        </SfDialog>
+                        <SfDialog IsModal="true" Header="@headerDelete" Width="285px" Height="170px" ShowCloseIcon="true" @bind-Visible="VisibilityDelete">
+                            <DialogTemplates>
+                                <Content>Czy jesteś pewny usunięcia tego wydarzenia?</Content>
+                            </DialogTemplates>
+                            <DialogButtons>
+                                <DialogButton Content="Usuń" IsPrimary="true" OnClick="@DeleteEvent" />
+                                <DialogButton Content="Anuluj" OnClick="@PopupClose" />
+                            </DialogButtons>
+                        </SfDialog>
+                    </div>
+                    @if (!ShowSchedule)
+                    {
+                        <MudDataGrid Items="@gridDataSource" Dense Filterable="true" FilterMode="DataGridFilterMode.Simple">
+                            <Columns>
+                                <TemplateColumn Title="Dział">
+                                    <CellTemplate>
+                                        @{
+                                            var cellContext = (CellContext<ScheduleForm>)context;
+                                            var dzialData = GetDzialDataByDzlId(cellContext.Item.DZL_DzlId);
                                         }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </EditorTemplate>
-                    </ScheduleTemplates>
-                </SfSchedule>
-                <div id="dialog">
-                    <SfDialog IsModal="true" Header="@headerEdit" Width="285px" Height="170px" ShowCloseIcon="true" @bind-Visible="VisibilityEdit">
-                        <DialogTemplates>
-                            <Content>Co chcesz edytować?</Content>
-                        </DialogTemplates>
-                        <DialogButtons>
-                            <DialogButton Content="Wydarzenie" IsPrimary="true" OnClick="@EditOccurrence" />
-                            <DialogButton Content="Całą seria" OnClick="@EditSeries" />
-                        </DialogButtons>
-                    </SfDialog>
-                    <SfDialog IsModal="true" Header="@headerDeleteSeries" Width="285px" Height="170px" ShowCloseIcon="true" @bind-Visible="VisibilityDeleteSeries">
-                        <DialogTemplates>
-                            <Content>Co chcesz usunąć?</Content>
-                        </DialogTemplates>
-                        <DialogButtons>
-                            <DialogButton Content="Wydarzenie w serii" IsPrimary="true" OnClick="@DeleteOccurrence" />
-                            <DialogButton Content="Całą serie" OnClick="@DeleteSeries" />
-                        </DialogButtons>
-                    </SfDialog>
-                    <SfDialog IsModal="true" Header="@headerDelete" Width="285px" Height="170px" ShowCloseIcon="true" @bind-Visible="VisibilityDelete">
-                        <DialogTemplates>
-                            <Content>Czy jesteś pewny usunięcia tego wydarzenia?</Content>
-                        </DialogTemplates>
-                        <DialogButtons>
-                            <DialogButton Content="Usuń" IsPrimary="true" OnClick="@DeleteEvent" />
-                            <DialogButton Content="Anuluj" OnClick="@PopupClose" />
-                        </DialogButtons>
-                    </SfDialog>
-                </div>
-                @if (!ShowSchedule)
-                {
-                    <MudDataGrid Items="@gridDataSource" Dense Filterable="true" FilterMode="DataGridFilterMode.Simple">
-                        <Columns>
-                            <TemplateColumn Title="Dział">
-                                <CellTemplate>
-                                    @{
-                                        var cellContext = (CellContext<ScheduleForm>)context;
-                                        var dzialData = GetDzialDataByDzlId(cellContext.Item.DZL_DzlId);
-                                    }
-                                    @dzialData.DZL_Kod
-                                </CellTemplate>
-                            </TemplateColumn>
-                            <TemplateColumn Title="Imie i Nazwisko">
-                                <CellTemplate>
-                                    @{
-                                        var cellContext = (CellContext<ScheduleForm>)context;
-                                        var osobaData = GetOsobaDataByDzlId(cellContext.Item.PRI_PraId);
-                                    }
-                                    @osobaData.Imie_Nazwisko
-                                </CellTemplate>
-                            </TemplateColumn>
-                            <TemplateColumn Title="Lokalizacja">
-                                <CellTemplate>
-                                    @{
-                                        var cellContext = (CellContext<ScheduleForm>)context;
-                                        var osobaData = GetLocationDataByLokId(cellContext.Item.LocationId);
-                                    }
-                                    @osobaData.Wartosc
-                                </CellTemplate>
-                            </TemplateColumn>
-                            <PropertyColumn Property="x =>x.Description" Title="Notatka"></PropertyColumn>
-                            <PropertyColumn Property="x =>x.StartTime" Title="Początek" Format="g"></PropertyColumn>
-                            <PropertyColumn Property="x =>x.EndTime" Title="Koniec" Format="g"></PropertyColumn>
+                                        @dzialData.DZL_Kod
+                                    </CellTemplate>
+                                </TemplateColumn>
+                                <TemplateColumn Title="Imie i Nazwisko">
+                                    <CellTemplate>
+                                        @{
+                                            var cellContext = (CellContext<ScheduleForm>)context;
+                                            var osobaData = GetOsobaDataByDzlId(cellContext.Item.PRI_PraId);
+                                        }
+                                        @osobaData.Imie_Nazwisko
+                                    </CellTemplate>
+                                </TemplateColumn>
+                                <TemplateColumn Title="Lokalizacja">
+                                    <CellTemplate>
+                                        @{
+                                            var cellContext = (CellContext<ScheduleForm>)context;
+                                            var osobaData = GetLocationDataByLokId(cellContext.Item.LocationId);
+                                        }
+                                        @osobaData.Wartosc
+                                    </CellTemplate>
+                                </TemplateColumn>
+                                <PropertyColumn Property="x =>x.Description" Title="Notatka"></PropertyColumn>
+                                <PropertyColumn Property="x =>x.StartTime" Title="Początek" Format="g"></PropertyColumn>
+                                <PropertyColumn Property="x =>x.EndTime" Title="Koniec" Format="g"></PropertyColumn>
 
-                        </Columns>
-                    </MudDataGrid>
-                }
-                @*                 <SfContextMenu TValue="MenuItem" CssClass="schedule-context-menu" Target=".e-schedule">
+                            </Columns>
+                        </MudDataGrid>
+                    }
+                    @*                 <SfContextMenu TValue="MenuItem" CssClass="schedule-context-menu" Target=".e-schedule">
                 <MenuItems>
                 <MenuItem Text="Dzisiaj" IconCss="e-icons e-timeline-today" Id="Today" Hidden="@isCell"></MenuItem>
                 <MenuItem Text="Edytuj wydarzenie" IconCss="e-icons e-edit" Id="Save" Hidden="@isEvent" Disabled="@disableState"></MenuItem>
@@ -636,42 +642,42 @@
                 <MenuEvents TValue="MenuItem" OnOpen="OnOpen" ItemSelected="OnItemSelected" Opened="SetDisableState"></MenuEvents>
                 </SfContextMenu>
                 *@
+                </div>
             </div>
-        </div>
-        <div class="right-panel @((this.IsSettingsVisible ? "" : "hide"))">
-            <div class="control-panel e-css">
-                <div class="col-row">
-                    <label>Wyszukiwarka</label>
-                </div>
-                <MudDivider DividerType="DividerType.Middle" Class="my-6" />
-                <div class="col-row">
-                    <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="DepartamentRef" TValue="int[]" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Placeholder="Dział" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                        <MultiSelectFieldSettings Text="DZL_Kod" Value="DZL_DzlId"></MultiSelectFieldSettings>
-                        <MultiSelectEvents TValue="int[]" TItem="ZatrudnieniDzialy" ValueChange="@(args => OnMultiSelectChange(args, "DZL_DzlId"))"></MultiSelectEvents>
-                    </SfMultiSelect>
-                </div>
-                <div class="col-row">
-                    <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="ResourceRef" TValue="int[]" TItem="OsobaData" DataSource="@Osoby" Placeholder="Imię i nazwisko" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                        <MultiSelectFieldSettings GroupBy="DZL_Kod" Text="Imie_Nazwisko" Value="PRI_PraId"></MultiSelectFieldSettings>
-                        <MultiSelectEvents TValue="int[]" TItem="OsobaData" ValueChange="@(args => OnMultiSelectChange(args, "PRI_PraId"))"></MultiSelectEvents>
-                    </SfMultiSelect>
-                </div>
-                <div class="col-row">
-                    <SfMultiSelect Mode="@VisualMode.CheckBox" TValue="string[]" TItem="string" DataSource="@Type" Placeholder="Typ" ValueChanged="OnTypeChange" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                        <MultiSelectFieldSettings Text="Type"></MultiSelectFieldSettings>
-                        <MultiSelectEvents TValue="string[]" TItem="string" ValueChange="@(args => OnMultiSelectTypeChange(args, "Type"))"></MultiSelectEvents>
-                    </SfMultiSelect>
-                </div>
-                @if (showSecondMultiSelect)
-                {
+            <div class="right-panel @((this.IsSettingsVisible ? "" : "hide"))">
+                <div class="control-panel e-css">
                     <div class="col-row">
-                        <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="LocationRef" TValue="int[]" TItem="OrganizacjaLokalizacje" DataSource="@LocalizationData" Placeholder="Lokalizacja" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                            <MultiSelectFieldSettings Text="Wartosc" Value="Lok_LokId"></MultiSelectFieldSettings>
-                            <MultiSelectEvents TValue="int[]" TItem="OrganizacjaLokalizacje" ValueChange="@(args => OnMultiSelectChange(args, "LocationId"))"></MultiSelectEvents>
+                        <label>Wyszukiwarka</label>
+                    </div>
+                    <MudDivider DividerType="DividerType.Middle" Class="my-6" />
+                    <div class="col-row">
+                        <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="DepartamentRef" TValue="int[]" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Placeholder="Dział" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                            <MultiSelectFieldSettings Text="DZL_Kod" Value="DZL_DzlId"></MultiSelectFieldSettings>
+                            <MultiSelectEvents TValue="int[]" TItem="ZatrudnieniDzialy" ValueChange="@(args => OnMultiSelectChange(args, "DZL_DzlId"))"></MultiSelectEvents>
                         </SfMultiSelect>
                     </div>
-                }
-                @*                 @if (showThirdMultiSelect)
+                    <div class="col-row">
+                        <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="ResourceRef" TValue="int[]" TItem="OsobaData" DataSource="@Osoby" Placeholder="Imię i nazwisko" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                            <MultiSelectFieldSettings GroupBy="DZL_Kod" Text="Imie_Nazwisko" Value="PRI_PraId"></MultiSelectFieldSettings>
+                            <MultiSelectEvents TValue="int[]" TItem="OsobaData" ValueChange="@(args => OnMultiSelectChange(args, "PRI_PraId"))"></MultiSelectEvents>
+                        </SfMultiSelect>
+                    </div>
+                    <div class="col-row">
+                        <SfMultiSelect Mode="@VisualMode.CheckBox" TValue="string[]" TItem="string" DataSource="@Type" Placeholder="Typ" ValueChanged="OnTypeChange" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                            <MultiSelectFieldSettings Text="Type"></MultiSelectFieldSettings>
+                            <MultiSelectEvents TValue="string[]" TItem="string" ValueChange="@(args => OnMultiSelectTypeChange(args, "Type"))"></MultiSelectEvents>
+                        </SfMultiSelect>
+                    </div>
+                    @if (showSecondMultiSelect)
+                    {
+                        <div class="col-row">
+                            <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="LocationRef" TValue="int[]" TItem="OrganizacjaLokalizacje" DataSource="@LocalizationData" Placeholder="Lokalizacja" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                <MultiSelectFieldSettings Text="Wartosc" Value="Lok_LokId"></MultiSelectFieldSettings>
+                                <MultiSelectEvents TValue="int[]" TItem="OrganizacjaLokalizacje" ValueChange="@(args => OnMultiSelectChange(args, "LocationId"))"></MultiSelectEvents>
+                            </SfMultiSelect>
+                        </div>
+                    }
+                    @*                 @if (showThirdMultiSelect)
                 {
                 <div class="col-row">
                 <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="RequestRef" TValue="Guid[]" TItem="OgolneWnioski" DataSource="@WnioskiData" Placeholder="Rodzaj wniosku" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
@@ -681,12 +687,25 @@
                 </div>
                 }
                 *@                <div class="col-row">
-                    <SfTextBox ID="events-search" Placeholder='Wprowadz opis' @bind-Value="@SearchValue" OnChange="@OnEventSearch"></SfTextBox>
+                        <SfTextBox ID="events-search" Placeholder='Wprowadz opis' @bind-Value="@SearchValue" OnChange="@OnEventSearch"></SfTextBox>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+}
+else
+{
+    @* <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text" />
+        Loading....
+    </div> *@
+    <LoadingScreen />
+}
 
 <style>
     .e-schedule .caption,
@@ -706,10 +725,10 @@
         background-color: #2a416f14 !important;
     }
 
-    .schedule-cell-customization.e-schedule .e-month-view .e-work-cells:not(.e-work-days) {
-        background-color: #2a416f14 !important;
-    }
-
+    /*         .schedule-cell-customization.e-schedule .e-month-view .e-work-cells:not(.e-work-days) {
+                background-color: #2a416f14 !important;
+            }
+     */
     .cell-custom-class {
         background: #42ecf5 !important;
     }
