@@ -10,14 +10,16 @@ namespace SoftlandERPGrafik.Web.Components.Services
     public class ScheduleService : BaseService
     {
         private readonly IRepository<ScheduleForm> repository;
+        private readonly IRepository<ScheduleHistoryForm> historyRepository;
         private readonly IRepository<Holidays> holidaysRepository;
         private readonly IRepository<OgolneWnioski> wnioskiRepository;
         private readonly IRepository<Kierownicy> kierownicyRepository;
 
-        public ScheduleService(IRepository<ScheduleForm> repository, IRepository<Holidays> holidaysRepository, IRepository<OgolneWnioski> wnioskiRepository, IRepository<Kierownicy> kierownicyRepository, MainContext mainContext, ScheduleContext scheduleContext, IADRepository adRepository, ILogger<BaseService> logger, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
+        public ScheduleService(IRepository<ScheduleForm> repository, IRepository<ScheduleHistoryForm> historyRepository, IRepository<Holidays> holidaysRepository, IRepository<OgolneWnioski> wnioskiRepository, IRepository<Kierownicy> kierownicyRepository, MainContext mainContext, ScheduleContext scheduleContext, IADRepository adRepository, ILogger<BaseService> logger, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
             : base(mainContext, scheduleContext, adRepository, logger, userDetailsService, lokalizacjeRepository, dzialyRepository, zrodloRepository, stanRepository, statusRepository)
         {
             this.repository = repository;
+            this.historyRepository = historyRepository;
             this.holidaysRepository = holidaysRepository;
             this.wnioskiRepository = wnioskiRepository;
             this.kierownicyRepository = kierownicyRepository;
@@ -143,47 +145,99 @@ namespace SoftlandERPGrafik.Web.Components.Services
             var kierownicy = await this.kierownicyRepository.GetAllAsync();
             var kierownicyAkronim = kierownicy?.Select(x => x.PRI_Opis).ToList();
 
-            if (app != null)
+            try
             {
-                app.Type = appointment.Type;
-                app.StartTime = appointment.StartTime;
-                app.EndTime = appointment.EndTime;
-                app.LocationId = appointment.LocationId;
-                app.RequestId = appointment.RequestId;
-                app.Description = string.IsNullOrWhiteSpace(appointment.Description) ? null : appointment.Description;
-                app.IDS = appointment.IDS;
-                app.IDD = appointment.IDD;
-                if (appointment.Type == "Wniosek")
+                if (app != null)
                 {
-                    app.DaysAmount = await this.CountWeekdaysAmount(appointment.StartTime, appointment.EndTime);
-                }
+                    var historyRecords = new List<ScheduleHistoryForm>(); // List to store history records
 
-                app.PRI_PraId = appointment.PRI_PraId;
-                app.DZL_DzlId = appointment.DZL_DzlId;
-                app.IsAllDay = appointment.IsAllDay;
-                app.RecurrenceRule = appointment.RecurrenceRule;
-                app.RecurrenceID = appointment.RecurrenceID;
-                app.RecurrenceException = appointment.RecurrenceException;
-                app.Updated = DateTime.Now;
-                app.UpdatedBy = userDetails?.SamAccountName;
-                if (kierownicyAkronim.Contains(userDetails.SamAccountName) || userDetails.SamAccountName == "ASE" || userDetails.SamAccountName == "BWL")
-                {
-                    app.Stan = appointment.Stan;
+                    // Define properties to check for changes
+                    var propertiesToCheck = new Dictionary<string, Func<ScheduleForm, object>>
+                    {
+                        { nameof(ScheduleForm.Type), x => x.Type },
+                        { nameof(ScheduleForm.StartTime), x => x.StartTime },
+                        { nameof(ScheduleForm.EndTime), x => x.EndTime },
+                        { nameof(ScheduleForm.Description), x => x.Description },
+                        { nameof(ScheduleForm.IsAllDay), x => x.IsAllDay },
+                        { nameof(ScheduleForm.LocationId), x => x.LocationId },
+                        { nameof(ScheduleForm.RequestId), x => x.RequestId },
+                        { nameof(ScheduleForm.IDS), x => x.IDS },
+                        { nameof(ScheduleForm.IDD), x => x.IDD },
+                    };
+
+                    foreach (var property in propertiesToCheck)
+                    {
+                        var propertyName = property.Key;
+                        var currentValue = property.Value(appointment);
+                        var previousValue = app.GetType().GetProperty(propertyName)?.GetValue(app);
+
+                        if (!Equals(currentValue, previousValue))
+                        {
+                            // If value has changed, create history record
+                            historyRecords.Add(new ScheduleHistoryForm
+                            {
+                                scheduleId = app.Id,
+                                Column = propertyName,
+                                Before = previousValue?.ToString(),
+                                After = currentValue?.ToString(),
+                                CreatedBy = userDetails?.SamAccountName,
+                            });
+
+                            // Update the property in the entity
+                            app.GetType().GetProperty(propertyName)?.SetValue(app, currentValue);
+                        }
+                    }
+
+                    foreach (var historyRecord in historyRecords)
+                    {
+                        // Assuming you have a repository method to insert a history record
+                        await this.historyRepository.InsertAsync(historyRecord);
+                    }
+
+                    app.Type = appointment.Type;
+                    app.StartTime = appointment.StartTime;
+                    app.EndTime = appointment.EndTime;
+                    app.LocationId = appointment.LocationId;
+                    app.RequestId = appointment.RequestId;
+                    app.Description = string.IsNullOrWhiteSpace(appointment.Description) ? null : appointment.Description;
+                    app.IDS = appointment.IDS;
+                    app.IDD = appointment.IDD;
                     if (appointment.Type == "Wniosek")
                     {
-                        app.Status = appointment.Status;
+                        app.DaysAmount = await this.CountWeekdaysAmount(appointment.StartTime, appointment.EndTime);
                     }
-                }
-                else
-                {
-                    app.Stan = "Plan";
-                    if (appointment.Type == "Wniosek")
-                    {
-                        app.Status = "Plan";
-                    }
-                }
 
-                await this.repository.UpdateAsync(app);
+                    app.PRI_PraId = appointment.PRI_PraId;
+                    app.DZL_DzlId = appointment.DZL_DzlId;
+                    app.IsAllDay = appointment.IsAllDay;
+                    app.RecurrenceRule = appointment.RecurrenceRule;
+                    app.RecurrenceID = appointment.RecurrenceID;
+                    app.RecurrenceException = appointment.RecurrenceException;
+                    app.Updated = DateTime.Now;
+                    app.UpdatedBy = userDetails?.SamAccountName;
+                    if (kierownicyAkronim.Contains(userDetails.SamAccountName) || userDetails.SamAccountName == "ASE" || userDetails.SamAccountName == "BWL")
+                    {
+                        app.Stan = appointment.Stan;
+                        if (appointment.Type == "Wniosek")
+                        {
+                            app.Status = appointment.Status;
+                        }
+                    }
+                    else
+                    {
+                        app.Stan = "Plan";
+                        if (appointment.Type == "Wniosek")
+                        {
+                            app.Status = "Plan";
+                        }
+                    }
+
+                    await this.repository.UpdateAsync(app);
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerExtensions.LogError(this.logger, "ERROR: {Message}", ex.Message);
             }
         }
 

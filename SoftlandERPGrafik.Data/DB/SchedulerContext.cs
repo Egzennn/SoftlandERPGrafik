@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SoftlandERPGrafik.Data.Entities.Forms;
-using SoftlandERPGrafik.Data.Entities.Forms.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +16,8 @@ namespace SoftlandERPGrafik.Data.DB
         }
 
         public DbSet<ScheduleForm> ScheduleForms { get; set; }
+
+        public DbSet<ScheduleHistoryForm> ScheduleHistoryForms { get; set; }
 
         //public DbSet<Holidays> HolidaysData { get; set; }
     }

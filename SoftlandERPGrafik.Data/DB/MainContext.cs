@@ -12,6 +12,7 @@ namespace SoftlandERPGrafik.Data.DB
             : base(options)
         {
         }
+
         public DbSet<Holidays> HolidaysData { get; set; }
 
         public DbSet<OgolneStan> OgolneStanVocabulary { get; set; }

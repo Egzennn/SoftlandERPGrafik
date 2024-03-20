@@ -44,6 +44,7 @@ builder.Services.AddScoped<OsobaAdaptor>();
 builder.Services.AddScoped<DzialAdaptor>();
 
 builder.Services.AddTransient<IRepository<ScheduleForm>, ScheduleRepository<ScheduleForm>>();
+builder.Services.AddTransient<IRepository<ScheduleHistoryForm>, ScheduleRepository<ScheduleHistoryForm>>();
 builder.Services.AddTransient<IRepository<Holidays>, Repository<Holidays>>();
 builder.Services.AddTransient<IRepository<OgolneStan>, Repository<OgolneStan>>();
 builder.Services.AddTransient<IRepository<OgolneStatus>, Repository<OgolneStatus>>();
