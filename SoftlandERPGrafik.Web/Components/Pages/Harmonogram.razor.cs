@@ -356,18 +356,29 @@
         {
             Dictionary<string, object> attributes = new Dictionary<string, object>();
             DateTime endTime = args.Data.EndTime;
+            var eventHistory = this.CheckEventHistory(args.Data.Id);
 
             string backgroundColor = args.Data.Color;
             string borderColor = "border-color: rgba(42, 65, 111, 0.2)";
             string backgroundImage = args.Data.Style;
+            string backgroundImageHistory = "linear-gradient(-45deg, rgba(74, 142, 214, 0.12), rgba(74, 142, 214, 0.12) 10px, rgba(249, 250, 252, 0.3) 10px, rgba(0, 0, 0, 1) 20px);";
 
-            attributes.Add("style", $"background:{backgroundColor}; border-color:{borderColor}; background-image:{backgroundImage}");
+            if (!eventHistory)
+            {
+                attributes.Add("style", $"background:{backgroundColor}; border-color:{borderColor}; background-image:{backgroundImage}; border: #0d6efd; border-left-style: solid;");
+            }
+            else
+            {
+                attributes.Add("style", $"background:{backgroundColor}; border-color:{borderColor}; background-image:{backgroundImage}");
+            }
+
             args.Attributes = attributes;
             if (endTime <= this.SystemTime)
             {
                 args.Data.IsReadonly = true;
                 attributes.Add("class", "e-read-only");
             }
+
 
             var item = args.Data.StartTime;
             HolidaysDate holidays = new HolidaysDate();
@@ -751,20 +762,20 @@
                 foreach (var osoba in Osoby)
                 {
                     List<ScheduleForm> datas = (from data in eventCollection
-                                              join os in Osoby on data.PRI_PraId equals os.PRI_PraId
-                                              join dzial in Dzialy on data.DZL_DzlId equals dzial.DZL_DzlId
-                                              join lokalizacja in LocalizationData on data.LocationId equals lokalizacja.Lok_LokId
-                                              where os.PRI_PraId == osoba.PRI_PraId && data.Type == "Grafik"
-                                              select new ScheduleForm
-                                              {
-                                                  Imie_Nazwisko = os.Imie_Nazwisko,
-                                                  StartTime = data.StartTime,
-                                                  EndTime = data.EndTime,
-                                                  Dzial = dzial.DZL_Kod,
-                                                  Lokalizacja = lokalizacja.Wartosc,
-                                                  Description = data.Description,
-                                                  RecurrenceRule = data.RecurrenceRule,
-                                              }).ToList();
+                                                join os in Osoby on data.PRI_PraId equals os.PRI_PraId
+                                                join dzial in Dzialy on data.DZL_DzlId equals dzial.DZL_DzlId
+                                                join lokalizacja in LocalizationData on data.LocationId equals lokalizacja.Lok_LokId
+                                                where os.PRI_PraId == osoba.PRI_PraId && data.Type == "Grafik"
+                                                select new ScheduleForm
+                                                {
+                                                    Imie_Nazwisko = os.Imie_Nazwisko,
+                                                    StartTime = data.StartTime,
+                                                    EndTime = data.EndTime,
+                                                    Dzial = dzial.DZL_Kod,
+                                                    Lokalizacja = lokalizacja.Wartosc,
+                                                    Description = data.Description,
+                                                    RecurrenceRule = data.RecurrenceRule,
+                                                }).ToList();
 
                     exportDatas.AddRange(datas);
                 }

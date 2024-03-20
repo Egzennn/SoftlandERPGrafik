@@ -67,7 +67,7 @@ builder.Services.Configure<ADConfiguration>(builder.Configuration.GetRequiredSec
 builder.Services.AddScoped<ADConfiguration>();
 builder.Services.AddScoped<ADUser>();
 
-Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzA0NDM4M0AzMjM0MmUzMDJlMzBUS0ZyTGNkcDZTdnFWeHpIbHBrTHpQSnc2MTFVZmxHKzRRM2xGRzRReW5VPQ==");
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzE3MjIwMUAzMjM1MmUzMDJlMzBRR2w4RldLVVJEM090Wkx3dzM3cXVaK0NQT2ladE1lbG1tYjZaYU9ZMy9BPQ==");
 
 var app = builder.Build();
 

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
@@ -21,22 +21,22 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Syncfusion.Blazor.Buttons" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.Calendars" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.Core" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.Data" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.Grid" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.Inputs" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.Layouts" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.Lists" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.Navigations" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.Popups" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.Schedule" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.Spinner" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.SplitButtons" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Blazor.Themes" Version="24.2.9" />
-    <PackageReference Include="Syncfusion.Licensing" Version="24.2.9" />
+    <PackageReference Include="Syncfusion.Blazor.Buttons" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.Calendars" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.Core" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.Data" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.Grid" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.Inputs" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.Layouts" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.Lists" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.Navigations" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.Popups" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.Schedule" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.Spinner" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.SplitButtons" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Blazor.Themes" Version="25.1.35" />
+    <PackageReference Include="Syncfusion.Licensing" Version="25.1.35" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Negotiate" Version="8.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.3">
