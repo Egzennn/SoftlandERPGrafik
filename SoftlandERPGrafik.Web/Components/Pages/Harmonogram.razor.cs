@@ -45,8 +45,10 @@
         public IEnumerable<Holidays>? Holiday;
         private List<string?> ogolneStatusy;
         private List<ScheduleForm>? gridDataSource;
+        private IEnumerable<ScheduleHistoryForm>? eventHistorygridDataSource;
         IEnumerable<ScheduleForm> DataSource;
         private bool ShowSchedule { get; set; } = true;
+        private bool ShowEventHistory { get; set; } = true;
         private string SearchValue { get; set; }
         public ScheduleForm EventData { get; set; }
         public CellClickEventArgs CellData { get; set; }
@@ -71,6 +73,7 @@
         private bool disableState = false;
         private bool enableStateA = false;
         private bool enableStateB = false;
+        private bool disableEventHistoryReadonly = false;
         private bool showSecondMultiSelect = false;
         private bool showThirdMultiSelect = false;
         private List<string>? signedInGroup;
@@ -100,6 +103,23 @@
             this.ogolneStatusy = await this.ScheduleService.GetStatusAsync();
             this.signedInGroup = this.ScheduleService.GetSignedInGroups(userDetails?.SamAccountName);
             this.DataSource = await this.ScheduleService.Get();
+        }
+
+        private bool CheckEventHistory(Guid id)
+        {
+            try
+            {
+                var eventHistory = this.ScheduleService.GetEventHistory(id);
+
+                // Check if eventHistory is null or empty
+                return eventHistory == null || !eventHistory.Any();
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the exception appropriately
+                Console.WriteLine($"An error occurred while checking event history: {ex.Message}");
+                return false; // Or handle it based on your application's requirements
+            }
         }
 
         public async void OnRenderCell(RenderCellEventArgs args)
@@ -414,6 +434,22 @@
             else
             {
                 this.ShowSchedule = true;
+            }
+        }
+
+        public async Task GetEventHistoryGrid(Guid id)
+        {
+            IEnumerable<ScheduleHistoryForm> resultData = this.ScheduleService.GetEventHistory(id);
+
+            if (resultData != null && resultData.Any())
+            {
+                this.ShowEventHistory = false;
+                this.eventHistorygridDataSource = resultData;
+            }
+            else
+            {
+                this.ShowEventHistory = true;
+                this.Snackbar.Add("Brak wyników wyszukiwania", Severity.Error);
             }
         }
 

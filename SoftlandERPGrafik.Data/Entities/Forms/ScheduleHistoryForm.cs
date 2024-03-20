@@ -12,8 +12,8 @@ namespace SoftlandERPGrafik.Data.Entities.Forms
 
         public string Column { get; set; }
 
-        public string Before { get; set; }
+        public string? Before { get; set; }
 
-        public string After { get; set; }
+        public string? After { get; set; }
     }
 }

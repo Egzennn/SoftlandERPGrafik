@@ -273,13 +273,14 @@
                                     var startTime = Data?.StartTime;
                                     var disableStateReadOnly = false;
                                     var disableStateAdd = false;
+                                    var disableEventHistoryReadonly = CheckEventHistory(Data.Id);
+                                    var todayDate = DateTime.Now.Date;
+                                    var startTimeDate = startTime?.Date;
+                                    disableStateAdd = !(startTimeDate.HasValue && startTimeDate.Value >= todayDate);
+
                                     if (signedInGroup.Contains("S_ADM_IT") || signedInGroup.Contains("S_ADM_KADRY"))
                                     {
                                         isAuthorizedManager = Data?.DZL_DzlId;
-                                    }
-                                    if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
-                                    {
-                                        disableStateAdd = true;
                                     }
                                 }
                                 <div class="cell-footer">
@@ -288,17 +289,26 @@
                                     {
                                         @if (isAddMode)
                                         {
-                                            var todayDate = DateTime.Now.Date;
-                                            var startTimeDate = startTime?.Date;
-
-                                            disableStateAdd = !(startTimeDate.HasValue && startTimeDate.Value >= todayDate);
+                                            if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
+                                            {
+                                                disableStateAdd = false;
+                                            }
 
                                             <SfButton Content="Dodaj" OnClick="@(e => OnMoreDetailsClick(e, Data, false))" Disabled="@disableStateAdd" />
                                         }
                                         else
                                         {
+
                                             disableStateReadOnly = isReadOnly ? true : false;
 
+                                            @if (ShowEventHistory == true)
+                                            {
+                                                <SfButton CssClass="e-event-edit" Content="Historia" Disabled="@disableEventHistoryReadonly" OnClick="@(e => GetEventHistoryGrid(Data.Id))" />
+                                            }
+                                            else
+                                            {
+                                                <SfButton CssClass="e-event-edit" Content="Zamknij" OnClick="@(() => ShowEventHistory = true)" />
+                                            }
                                             <SfButton CssClass="e-event-edit" Content="Edycja"
                                                       OnClick="@(e => OnMoreDetailsClick(e, Data, true))" Disabled="@disableStateReadOnly" />
                                             @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
@@ -589,13 +599,26 @@
                             </DialogButtons>
                         </SfDialog>
                     </div>
+                    @if (!ShowEventHistory)
+                    {
+                        <MudDataGrid Items="@eventHistorygridDataSource" Dense Filterable="true" FilterMode="DataGridFilterMode.Simple">
+                                 <Columns>
+                                     <PropertyColumn Property="x =>x.Created" Title="Data" Format="g"></PropertyColumn>
+                                     <PropertyColumn Property="x =>x.Column" Title="Kolumna"></PropertyColumn>
+                                     <PropertyColumn Property="x =>x.Before" Title="Przed"></PropertyColumn>
+                                     <PropertyColumn Property="x =>x.After" Title="Po"></PropertyColumn>
+                                     <PropertyColumn Property="x =>x.CreatedBy" Title="Utworzono przez"></PropertyColumn>
+
+                                 </Columns>
+                             </MudDataGrid>
+                    }
                     @if (!ShowSchedule)
                     {
                         <MudDataGrid Items="@gridDataSource" Dense Filterable="true" FilterMode="DataGridFilterMode.Simple">
-                            <Columns>
-                                <TemplateColumn Title="Dział">
-                                    <CellTemplate>
-                                        @{
+                                 <Columns>
+                                     <TemplateColumn Title="Dział">
+                                         <CellTemplate>
+                                             @{
                                             var cellContext = (CellContext<ScheduleForm>)context;
                                             var dzialData = GetDzialDataByDzlId(cellContext.Item.DZL_DzlId);
                                         }
@@ -658,30 +681,30 @@
                     <MudDivider DividerType="DividerType.Middle" Class="my-6" />
                     <div class="col-row">
                         <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="DepartamentRef" TValue="int[]" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Placeholder="Dział" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                            <MultiSelectFieldSettings Text="DZL_Kod" Value="DZL_DzlId"></MultiSelectFieldSettings>
-                            <MultiSelectEvents TValue="int[]" TItem="ZatrudnieniDzialy" ValueChange="@(args => OnMultiSelectChange(args, "DZL_DzlId"))"></MultiSelectEvents>
-                        </SfMultiSelect>
-                    </div>
-                    <div class="col-row">
-                        <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="ResourceRef" TValue="int[]" TItem="OsobaData" DataSource="@Osoby" Placeholder="Imię i nazwisko" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                            <MultiSelectFieldSettings GroupBy="DZL_Kod" Text="Imie_Nazwisko" Value="PRI_PraId"></MultiSelectFieldSettings>
-                            <MultiSelectEvents TValue="int[]" TItem="OsobaData" ValueChange="@(args => OnMultiSelectChange(args, "PRI_PraId"))"></MultiSelectEvents>
-                        </SfMultiSelect>
-                    </div>
-                    <div class="col-row">
-                        <SfMultiSelect Mode="@VisualMode.CheckBox" TValue="string[]" TItem="string" DataSource="@Type" Placeholder="Typ" ValueChanged="OnTypeChange" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                            <MultiSelectFieldSettings Text="Type"></MultiSelectFieldSettings>
-                            <MultiSelectEvents TValue="string[]" TItem="string" ValueChange="@(args => OnMultiSelectTypeChange(args, "Type"))"></MultiSelectEvents>
-                        </SfMultiSelect>
-                    </div>
-                    @if (showSecondMultiSelect)
+                             <MultiSelectFieldSettings Text="DZL_Kod" Value="DZL_DzlId"></MultiSelectFieldSettings>
+                             <MultiSelectEvents TValue="int[]" TItem="ZatrudnieniDzialy" ValueChange="@(args => OnMultiSelectChange(args, "DZL_DzlId"))"></MultiSelectEvents>
+                         </SfMultiSelect>
+                     </div>
+                     <div class="col-row">
+                         <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="ResourceRef" TValue="int[]" TItem="OsobaData" DataSource="@Osoby" Placeholder="Imię i nazwisko" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                             <MultiSelectFieldSettings GroupBy="DZL_Kod" Text="Imie_Nazwisko" Value="PRI_PraId"></MultiSelectFieldSettings>
+                             <MultiSelectEvents TValue="int[]" TItem="OsobaData" ValueChange="@(args => OnMultiSelectChange(args, "PRI_PraId"))"></MultiSelectEvents>
+                         </SfMultiSelect>
+                     </div>
+                     <div class="col-row">
+                         <SfMultiSelect Mode="@VisualMode.CheckBox" TValue="string[]" TItem="string" DataSource="@Type" Placeholder="Typ" ValueChanged="OnTypeChange" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                             <MultiSelectFieldSettings Text="Type"></MultiSelectFieldSettings>
+                             <MultiSelectEvents TValue="string[]" TItem="string" ValueChange="@(args => OnMultiSelectTypeChange(args, "Type"))"></MultiSelectEvents>
+                         </SfMultiSelect>
+                     </div>
+                     @if (showSecondMultiSelect)
                     {
                         <div class="col-row">
                             <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="LocationRef" TValue="int[]" TItem="OrganizacjaLokalizacje" DataSource="@LocalizationData" Placeholder="Lokalizacja" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                                <MultiSelectFieldSettings Text="Wartosc" Value="Lok_LokId"></MultiSelectFieldSettings>
-                                <MultiSelectEvents TValue="int[]" TItem="OrganizacjaLokalizacje" ValueChange="@(args => OnMultiSelectChange(args, "LocationId"))"></MultiSelectEvents>
-                            </SfMultiSelect>
-                        </div>
+                                 <MultiSelectFieldSettings Text="Wartosc" Value="Lok_LokId"></MultiSelectFieldSettings>
+                                 <MultiSelectEvents TValue="int[]" TItem="OrganizacjaLokalizacje" ValueChange="@(args => OnMultiSelectChange(args, "LocationId"))"></MultiSelectEvents>
+                             </SfMultiSelect>
+                         </div>
                     }
                     @*                 @if (showThirdMultiSelect)
                 {
@@ -702,14 +725,6 @@
 }
 else
 {
-    @* <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text" />
-        Loading....
-    </div> *@
     <LoadingScreen />
 }
 
@@ -732,9 +747,9 @@ else
     }
 
     /*         .schedule-cell-customization.e-schedule .e-month-view .e-work-cells:not(.e-work-days) {
-                    background-color: #2a416f14 !important;
-                }
-         */
+                                                background-color: #2a416f14 !important;
+                                            }
+                                     */
     .cell-custom-class {
         background: #42ecf5 !important;
     }

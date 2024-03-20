@@ -1,4 +1,5 @@
-﻿using SoftlandERPGrafik.Core.Repositories.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using SoftlandERPGrafik.Core.Repositories.Interfaces;
 using SoftlandERPGrafik.Data.DB;
 using SoftlandERPGrafik.Data.Entities.Forms;
 using SoftlandERPGrafik.Data.Entities.Forms.Data;
@@ -149,20 +150,30 @@ namespace SoftlandERPGrafik.Web.Components.Services
             {
                 if (app != null)
                 {
-                    var historyRecords = new List<ScheduleHistoryForm>(); // List to store history records
+                    var historyRecords = new List<ScheduleHistoryForm>();
 
-                    // Define properties to check for changes
                     var propertiesToCheck = new Dictionary<string, Func<ScheduleForm, object>>
                     {
                         { nameof(ScheduleForm.Type), x => x.Type },
                         { nameof(ScheduleForm.StartTime), x => x.StartTime },
                         { nameof(ScheduleForm.EndTime), x => x.EndTime },
                         { nameof(ScheduleForm.Description), x => x.Description },
-                        { nameof(ScheduleForm.IsAllDay), x => x.IsAllDay },
                         { nameof(ScheduleForm.LocationId), x => x.LocationId },
                         { nameof(ScheduleForm.RequestId), x => x.RequestId },
                         { nameof(ScheduleForm.IDS), x => x.IDS },
                         { nameof(ScheduleForm.IDD), x => x.IDD },
+                        { nameof(ScheduleForm.Stan), x => x.Stan },
+                        { nameof(ScheduleForm.Status), x => x.Status },
+                    };
+
+                    Dictionary<string, string> propertyNameDictionary = new Dictionary<string, string>
+                    {
+                        { "Type", "Typ" },
+                        { "StartTime", "DataPoczatkowa" },
+                        { "EndTime", "DataKoncowa" },
+                        { "Description", "Notatka" },
+                        { "LocationId", "Lokalizacja" },
+                        { "RequestId", "Wniosek" },
                     };
 
                     foreach (var property in propertiesToCheck)
@@ -171,26 +182,25 @@ namespace SoftlandERPGrafik.Web.Components.Services
                         var currentValue = property.Value(appointment);
                         var previousValue = app.GetType().GetProperty(propertyName)?.GetValue(app);
 
+                        var translatedPropertyName = propertyNameDictionary.ContainsKey(propertyName) ? propertyNameDictionary[propertyName] : propertyName;
+
                         if (!Equals(currentValue, previousValue))
                         {
-                            // If value has changed, create history record
                             historyRecords.Add(new ScheduleHistoryForm
                             {
                                 scheduleId = app.Id,
-                                Column = propertyName,
+                                Column = translatedPropertyName, // Use translated property name
                                 Before = previousValue?.ToString(),
                                 After = currentValue?.ToString(),
                                 CreatedBy = userDetails?.SamAccountName,
                             });
 
-                            // Update the property in the entity
                             app.GetType().GetProperty(propertyName)?.SetValue(app, currentValue);
                         }
                     }
 
                     foreach (var historyRecord in historyRecords)
                     {
-                        // Assuming you have a repository method to insert a history record
                         await this.historyRepository.InsertAsync(historyRecord);
                     }
 
@@ -270,7 +280,25 @@ namespace SoftlandERPGrafik.Web.Components.Services
                     weekdaysAmount++;
                 }
             }
+
             return weekdaysAmount;
+        }
+
+        public IEnumerable<ScheduleHistoryForm> GetEventHistory(Guid id)
+        {
+            try
+            {
+                var history = this.scheduleContext.ScheduleHistoryForms
+                    .Where(x => x.scheduleId == id && x.Column != "Stan" && x.Column != "Status")
+                    .ToList();
+
+                return history;
+            }
+            catch (Exception ex)
+            {
+            }
+
+            return Enumerable.Empty<ScheduleHistoryForm>();
         }
     }
 }
