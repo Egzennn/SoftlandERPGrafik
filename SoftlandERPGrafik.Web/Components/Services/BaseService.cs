@@ -1,6 +1,6 @@
-﻿using SoftlandERPGrafik.Core.Repositories.Interfaces;
+﻿using MudBlazor;
+using SoftlandERPGrafik.Core.Repositories.Interfaces;
 using SoftlandERPGrafik.Data.DB;
-using SoftlandERPGrafik.Data.Entities.Forms.Data;
 using SoftlandERPGrafik.Data.Entities.Views;
 using SoftlandERPGrafik.Data.Entities.Vocabularies.Forms.Ogolne;
 
@@ -12,6 +12,7 @@ namespace SoftlandERPGrafik.Web.Components.Services
         public readonly ScheduleContext scheduleContext;
         public readonly IADRepository adRepository;
         public readonly ILogger<BaseService> logger;
+        public readonly ISnackbar snackbarNotification;
         public readonly UserDetailsService userDetailsService;
         public readonly IRepository<OrganizacjaLokalizacje> lokalizacjeRepository;
         public readonly IRepository<ZatrudnieniDzialy> dzialyRepository;
@@ -19,13 +20,14 @@ namespace SoftlandERPGrafik.Web.Components.Services
         public readonly IRepository<OgolneStan> stanRepository;
         public readonly IRepository<OgolneStatus> statusRepository;
 
-        public BaseService(MainContext mainContext, ScheduleContext scheduleContext, IADRepository adRepository, ILogger<BaseService> logger, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
+        public BaseService(MainContext mainContext, ScheduleContext scheduleContext, IADRepository adRepository, ILogger<BaseService> logger, ISnackbar snackbarNotification, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
             : base()
         {
             this.mainContext = mainContext;
             this.scheduleContext = scheduleContext;
             this.adRepository = adRepository;
             this.logger = logger;
+            this.snackbarNotification = snackbarNotification;
             this.userDetailsService = userDetailsService;
             this.lokalizacjeRepository = lokalizacjeRepository;
             this.dzialyRepository = dzialyRepository;

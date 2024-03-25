@@ -10,15 +10,12 @@
     using SoftlandERPGrafik.Data.Entities.Staff.AD;
     using SoftlandERPGrafik.Data.Entities.Views;
     using SoftlandERPGrafik.Data.Entities.Vocabularies.Forms.Ogolne;
-    using SoftlandERPGrafik.Data.Migrations;
     using Syncfusion.Blazor;
     using Syncfusion.Blazor.Data;
     using Syncfusion.Blazor.DropDowns;
     using Syncfusion.Blazor.Inputs;
     using Syncfusion.Blazor.Navigations;
     using Syncfusion.Blazor.Schedule;
-    using Syncfusion.Blazor.Schedule.Internal;
-    using static System.Runtime.InteropServices.JavaScript.JSType;
     using Timer = System.Timers.Timer;
 
     public partial class Harmonogram
@@ -32,16 +29,19 @@
         SfTextBox SubjectRef;
         SfMultiSelect<int[], ZatrudnieniDzialy>? DepartamentRef;
         SfMultiSelect<int[], OsobaData>? ResourceRef;
+        SfMultiSelect<int[], OsobaData>? ResourceRef2;
         SfMultiSelect<int[], OrganizacjaLokalizacje>? LocationRef;
         SfMultiSelect<Guid[], OgolneWnioski>? RequestRef;
         SfSchedule<ScheduleForm>? ScheduleRef;
         bool isCreated;
         private Timezone TimezoneData { get; set; } = new Timezone();
         private IEnumerable<OsobaData>? Osoby;
+        private IEnumerable<OsobaData>? OsobyForDialog;
         private IEnumerable<ZatrudnieniDzialy>? Dzialy;
         private IEnumerable<Kierownicy>? Kierownik;
         private IEnumerable<OrganizacjaLokalizacje>? LocalizationData;
         private static IEnumerable<OgolneWnioski>? WnioskiData;
+        private IEnumerable<OgolneWnioski>? wnioskiUrlop;
         public IEnumerable<Holidays>? Holiday;
         private List<string?> ogolneStatusy;
         private List<ScheduleForm>? gridDataSource;
@@ -73,15 +73,19 @@
         private bool disableState = false;
         private bool enableStateA = false;
         private bool enableStateB = false;
-        private bool disableEventHistoryReadonly = false;
         private bool showSecondMultiSelect = false;
         private bool showThirdMultiSelect = false;
         private List<string>? signedInGroup;
         private string headerEdit = "Edycja wydarzenia/serii";
         private string headerDeleteSeries = "Usunięcie wydarzenia/serii";
         private string headerDelete = "Usuń wydarzenie";
+        private string headerEditStan = "Masowa edycja stanów";
         private string[] cellCustomClass = { "cell-custom-class" };
         private string[] customClass = { "custom-class" };
+
+        private int[] SelectedPRI_PraId { get; set; }
+
+        private string SelectedType { get; set; }
 
         private bool VisibilityEdit { get; set; } = false;
 
@@ -89,20 +93,124 @@
 
         private bool VisibilityDeleteSeries { get; set; } = false;
 
+        private bool VisibilityChangeStanAll { get; set; } = false;
+
         protected override async Task OnInitializedAsync()
         {
             this.aduser = this.ADRepository.GetAllADUsers();
             this.userDetails = await this.UserDetailsService.GetUserAllDetailsAsync();
             this.Osoby = await this.ScheduleService.GetEmployeesAsync();
-            this.Dzialy = await this.ScheduleService.GetDepartamentAsync(userDetails?.SamAccountName);
+            this.Dzialy = await this.ScheduleService.GetDepartamentAsync(this.userDetails?.SamAccountName);
             this.TimezoneData = new Timezone().GetSystemTimeZone();
             this.LocalizationData = await this.ScheduleService.GetLocalizationAsync();
             WnioskiData = await this.ScheduleService.GetWnioskiAsync();
             this.Holiday = await this.ScheduleService.GetHolidaysAsync();
             this.Kierownik = await this.Kierownicy.GetAllAsync();
             this.ogolneStatusy = await this.ScheduleService.GetStatusAsync();
-            this.signedInGroup = this.ScheduleService.GetSignedInGroups(userDetails?.SamAccountName);
+            this.signedInGroup = this.ScheduleService.GetSignedInGroups(this.userDetails?.SamAccountName);
             this.DataSource = await this.ScheduleService.Get();
+            this.wnioskiUrlop = WnioskiData.Where(x => x.Wartosc.Contains("(Uw"));
+            this.OsobyForDialog = await this.GetOsobaByDepartament();
+        }
+
+        public async Task ChangeStanAll()
+        {
+            try
+            {
+                string type = this.SelectedType;
+                List<int> ids = this.SelectedPRI_PraId.ToList();
+                List<DateTime> viewDates = this.ScheduleRef.GetCurrentViewDates();
+                DateTime startDate = viewDates.Min();
+                DateTime endDate = viewDates.Max();
+
+                var eventsChangeStan = this.DataSource
+                    .Where(x => ids.Contains(x.PRI_PraId) && x.Type == type && x.StartTime >= startDate && x.EndTime <= endDate && x.Stan == "Plan")
+                    .ToList();
+
+                int recordsUpdated = 0;
+                foreach (var eventData in eventsChangeStan)
+                {
+                    eventData.Updated = DateTime.Now;
+                    eventData.UpdatedBy = this.userDetails?.SamAccountName;
+                    if (this.userDetails?.SamAccountName == "ASE")
+                    {
+                        eventData.Status = "Akceptacja";
+                    }
+                    else
+                    {
+                        eventData.Stan = "Akceptacja";
+                    }
+
+                    await this.ScheduleService.Update(eventData);
+                    recordsUpdated++;
+                }
+
+                if (recordsUpdated == 0)
+                {
+                    this.Snackbar.Add("Brak rekordów do zmiany", Severity.Error);
+                }
+                else
+                {
+                    this.Snackbar.Add($"Zaktualizowano {recordsUpdated} rekordów.", Severity.Success);
+                    this.StateHasChanged();
+                    await this.ScheduleRef.RefreshEventsAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        public async Task<List<OsobaData>> GetOsobaByDepartament()
+        {
+            List<OsobaData> listaOsob = new List<OsobaData>(); // Inicjalizacja listy poza warunkami warunkowymi
+
+            if (this.signedInGroup.Contains("S_ADM_IT") || this.signedInGroup.Contains("S_ADM_KADRY"))
+            {
+                listaOsob = this.Osoby.ToList();
+            }
+            else
+            {
+                int praId = this.Kierownik
+                    .Where(x => x.PRI_Opis == this.userDetails?.SamAccountName)
+                    .Select(x => x.PRI_PraId)
+                    .FirstOrDefault();
+
+                int dzialId = this.Osoby
+                    .Where(x => x.PRI_PraId == praId)
+                    .Select(x => x.DZL_DzlId)
+                    .FirstOrDefault();
+
+                listaOsob = this.Osoby
+                    .Where(x => x.DZL_DzlId == dzialId)
+                    .ToList();
+            }
+
+            return listaOsob;
+        }
+
+        public int[] GetDaysAmount(int id)
+        {
+            try
+            {
+                int daysCountPlan = this.DataSource
+                    .Where(x => x.Type == "Wniosek"
+                                && (x.Stan == "Plan" || x.Status == "Plan")
+                                && x.PRI_PraId == id
+                                && this.wnioskiUrlop.Any(wn => wn.Id == x.RequestId))
+                    .Sum(x => x.DaysAmount ?? 0);
+
+                int daysCountAkceptacja = this.DataSource
+                    .Where(x => x.Type == "Wniosek" && (x.Stan == "Akceptacja" && x.Status == "Akceptacja") && x.PRI_PraId == id && this.wnioskiUrlop.Any(wn => wn.Id == x.RequestId))
+                    .Sum(x => x.DaysAmount ?? 0);
+
+                return new int[] { daysCountPlan, daysCountAkceptacja };
+            }
+            catch (Exception ex)
+            {
+                // Tutaj możesz obsłużyć błąd, np. zalogować go lub rzucić dalej
+                throw new Exception("Błąd podczas pobierania liczby dni.", ex);
+            }
         }
 
         private bool CheckEventHistory(Guid id)
@@ -131,7 +239,7 @@
 
             if (args.ElementType == ElementType.WorkCells)
             {
-                if (isHoliday || isWeekend)
+                if (isHoliday)
                 {
                     args.CssClasses = new List<string>(this.cellCustomClass);
                 }
@@ -322,7 +430,7 @@
 
         private bool IsCurrentUserAuthorized(int? priPraId)
         {
-            var priOpis = Osoby.FirstOrDefault(o => o.PRI_PraId == priPraId)?.PRI_Opis;
+            var priOpis = this.Osoby.FirstOrDefault(o => o.PRI_PraId == priPraId)?.PRI_Opis;
             return this.userDetails?.SamAccountName == priOpis;
         }
 
@@ -333,7 +441,7 @@
             if (isManager)
             {
                 var priOpis = this.Kierownik.FirstOrDefault(o => o.PRI_Opis == this.userDetails?.SamAccountName)?.CNT_Nazwa;
-                int idDzial = Dzialy.FirstOrDefault(o => string.Equals(o.DZL_Kod, priOpis, StringComparison.OrdinalIgnoreCase)).DZL_DzlId;
+                int idDzial = this.Dzialy.FirstOrDefault(o => string.Equals(o.DZL_Kod, priOpis, StringComparison.OrdinalIgnoreCase)).DZL_DzlId;
 
                 return idDzial;
             }
@@ -343,9 +451,9 @@
 
         private OsobaData? GetOsobaBySamAccountName(string samAccountName)
         {
-            if (Osoby != null)
+            if (this.Osoby != null)
             {
-                return Osoby.FirstOrDefault(osoba => osoba.PRI_Opis == samAccountName);
+                return this.Osoby.FirstOrDefault(osoba => osoba.PRI_Opis == samAccountName);
             }
 
             return null;
@@ -361,7 +469,6 @@
             string backgroundColor = args.Data.Color;
             string borderColor = "border-color: rgba(42, 65, 111, 0.2)";
             string backgroundImage = args.Data.Style;
-            string backgroundImageHistory = "linear-gradient(-45deg, rgba(74, 142, 214, 0.12), rgba(74, 142, 214, 0.12) 10px, rgba(249, 250, 252, 0.3) 10px, rgba(0, 0, 0, 1) 20px);";
 
             if (!eventHistory)
             {
@@ -377,15 +484,6 @@
             {
                 args.Data.IsReadonly = true;
                 attributes.Add("class", "e-read-only");
-            }
-
-
-            var item = args.Data.StartTime;
-            HolidaysDate holidays = new HolidaysDate();
-            bool exist = holidays.dateCollection.Any(d => d.Year == item.Year && d.Month == item.Month && d.Day == item.Day);
-            if (exist)
-            {
-                args.Cancel = true;
             }
         }
 
@@ -462,6 +560,18 @@
                 this.ShowEventHistory = true;
                 this.Snackbar.Add("Brak wyników wyszukiwania", Severity.Error);
             }
+        }
+
+        public void OnPracownikChange(Syncfusion.Blazor.DropDowns.MultiSelectChangeEventArgs<int[]> args)
+        {
+            int[] ids = args.Value;
+            SelectedPRI_PraId = ids != null ? ids : new int[0];
+        }
+
+        public void OnTypeChange(Syncfusion.Blazor.DropDowns.MultiSelectChangeEventArgs<string> args)
+        {
+            string type = args.Value;
+            this.SelectedType = type;
         }
 
         public void OnMultiSelectChange(Syncfusion.Blazor.DropDowns.MultiSelectChangeEventArgs<int[]> args, string field)
@@ -543,6 +653,11 @@
             //{
             //    this.LocalizationQuery = new Query();
             //}
+        }
+
+        private async void ChangeVisibility()
+        {
+            this.VisibilityChangeStanAll = true;
         }
 
         private async void OnNewEventAdd()

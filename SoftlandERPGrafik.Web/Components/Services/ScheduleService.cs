@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MudBlazor;
+using Serilog;
 using SoftlandERPGrafik.Core.Repositories.Interfaces;
 using SoftlandERPGrafik.Data.DB;
 using SoftlandERPGrafik.Data.Entities.Forms;
@@ -16,8 +18,8 @@ namespace SoftlandERPGrafik.Web.Components.Services
         private readonly IRepository<OgolneWnioski> wnioskiRepository;
         private readonly IRepository<Kierownicy> kierownicyRepository;
 
-        public ScheduleService(IRepository<ScheduleForm> repository, IRepository<ScheduleHistoryForm> historyRepository, IRepository<Holidays> holidaysRepository, IRepository<OgolneWnioski> wnioskiRepository, IRepository<Kierownicy> kierownicyRepository, MainContext mainContext, ScheduleContext scheduleContext, IADRepository adRepository, ILogger<BaseService> logger, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
-            : base(mainContext, scheduleContext, adRepository, logger, userDetailsService, lokalizacjeRepository, dzialyRepository, zrodloRepository, stanRepository, statusRepository)
+        public ScheduleService(IRepository<ScheduleForm> repository, IRepository<ScheduleHistoryForm> historyRepository, IRepository<Holidays> holidaysRepository, IRepository<OgolneWnioski> wnioskiRepository, IRepository<Kierownicy> kierownicyRepository, MainContext mainContext, ScheduleContext scheduleContext, IADRepository adRepository, ILogger<BaseService> logger, ISnackbar snackbarNotification, UserDetailsService userDetailsService, IRepository<OrganizacjaLokalizacje> lokalizacjeRepository, IRepository<ZatrudnieniDzialy> dzialyRepository, IRepository<ZatrudnieniZrodlo> zrodloRepository, IRepository<OgolneStan> stanRepository, IRepository<OgolneStatus> statusRepository)
+            : base(mainContext, scheduleContext, adRepository, logger, snackbarNotification, userDetailsService, lokalizacjeRepository, dzialyRepository, zrodloRepository, stanRepository, statusRepository)
         {
             this.repository = repository;
             this.historyRepository = historyRepository;
@@ -28,115 +30,174 @@ namespace SoftlandERPGrafik.Web.Components.Services
 
         public async Task<List<OsobaData>> GetEmployeesAsync()
         {
-            var employees = await this.zrodloRepository.GetAllAsync();
-
-            return employees.Select(zatrudniony => new OsobaData(zatrudniony)).OrderBy(dzial => dzial.DZL_Kod).ThenBy(osoba => osoba.Imie_Nazwisko).ToList();
+            try
+            {
+                var employees = await this.zrodloRepository.GetAllAsync();
+                return employees.Select(zatrudniony => new OsobaData(zatrudniony)).OrderBy(dzial => dzial.DZL_Kod).ThenBy(osoba => osoba.Imie_Nazwisko).ToList();
+            }
+            catch (Exception ex)
+            {
+                this.snackbarNotification.Add(ex.Message, Severity.Error);
+                Log.Fatal(ex, "Fatal error");
+                return null;
+            }
         }
 
         public async Task<IEnumerable<ZatrudnieniDzialy>> GetDepartamentAsync(string acronym)
         {
-            var employees = await this.GetEmployeesAsync();
-            var currentiserdepartament = employees.Where(x => x.PRI_Opis == acronym).Select(x => x.DZL_DzlId);
-            var departament = await this.dzialyRepository.GetAllAsync();
-
-            foreach (var dzlId in currentiserdepartament)
+            try
             {
-                var matchingDepartment = departament?.FirstOrDefault(x => x.DZL_DzlId == dzlId);
-                if (matchingDepartment != null)
-                {
-                    matchingDepartment.IsExpand = true;
-                }
-            }
+                var employees = await this.GetEmployeesAsync();
+                var currentiserdepartament = employees.Where(x => x.PRI_Opis == acronym).Select(x => x.DZL_DzlId);
+                var departament = await this.dzialyRepository.GetAllAsync();
 
-            return departament;
+                foreach (var dzlId in currentiserdepartament)
+                {
+                    var matchingDepartment = departament?.FirstOrDefault(x => x.DZL_DzlId == dzlId);
+                    if (matchingDepartment != null)
+                    {
+                        matchingDepartment.IsExpand = true;
+                    }
+                }
+
+                return departament;
+            }
+            catch (Exception ex)
+            {
+                this.snackbarNotification.Add(ex.Message, Severity.Error);
+                Log.Fatal(ex, "Fatal error");
+                return null;
+            }
         }
 
-        public async Task<IEnumerable<OrganizacjaLokalizacje>> GetLocalizationAsync() => await this.lokalizacjeRepository.GetAllAsync();
+        public async Task<IEnumerable<OrganizacjaLokalizacje>> GetLocalizationAsync()
+        {
+            try
+            {
+                this.snackbarNotification.Add("", Severity.Success);
+                return await this.lokalizacjeRepository.GetAllAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Fatal error");
+                return null;
+            }
+        }
 
-        public async Task<IEnumerable<Holidays>> GetHolidaysAsync() => await this.holidaysRepository.GetAllAsync();
+        public async Task<IEnumerable<Holidays>> GetHolidaysAsync()
+        {
+            try
+            {
+                return await this.holidaysRepository.GetAllAsync();
+            }
+            catch (Exception ex)
+            {
+                this.snackbarNotification.Add(ex.Message, Severity.Error);
+                Log.Fatal(ex, "Fatal error");
+                return null;
+            }
+        }
 
         public async Task<IEnumerable<ScheduleForm>> Get()
         {
-            var scheduleForms = await this.repository.GetAllAsync();
-
-            //var scheduleForms = await this.scheduleContext.ScheduleForms
-            //.ToListAsync().ConfigureAwait(true);
-
-            List<ScheduleForm> eventData = new List<ScheduleForm>();
-
-            foreach (var scheduleForm in scheduleForms)
+            try
             {
-                eventData.Add(new ScheduleForm
-                {
-                    Id = scheduleForm.Id,
-                    Type = scheduleForm.Type,
-                    StartTime = scheduleForm.StartTime,
-                    EndTime = scheduleForm.EndTime,
-                    LocationId = scheduleForm.LocationId,
-                    RequestId = scheduleForm.RequestId,
-                    Description = scheduleForm.Description,
-                    IDD = scheduleForm.IDD,
-                    IDS = scheduleForm.IDS,
-                    DaysAmount = scheduleForm.DaysAmount,
-                    IsAllDay = scheduleForm.IsAllDay,
-                    PRI_PraId = scheduleForm.PRI_PraId,
-                    DZL_DzlId = scheduleForm.DZL_DzlId,
-                    RecurrenceRule = scheduleForm.RecurrenceRule,
-                    RecurrenceID = scheduleForm.RecurrenceID,
-                    RecurrenceException = scheduleForm.RecurrenceException,
-                    Stan = scheduleForm.Stan,
-                    Status = scheduleForm.Status,
-                    CreatedBy = scheduleForm.CreatedBy,
-                    Color = scheduleForm.Color,
-                    Style = scheduleForm.Style,
-                });
-            }
+                var scheduleForms = await this.repository.GetAllAsync();
 
-            return eventData;
+                //var scheduleForms = await this.scheduleContext.ScheduleForms
+                //.ToListAsync().ConfigureAwait(true);
+
+                List<ScheduleForm> eventData = new List<ScheduleForm>();
+
+                foreach (var scheduleForm in scheduleForms)
+                {
+                    eventData.Add(new ScheduleForm
+                    {
+                        Id = scheduleForm.Id,
+                        Type = scheduleForm.Type,
+                        StartTime = scheduleForm.StartTime,
+                        EndTime = scheduleForm.EndTime,
+                        LocationId = scheduleForm.LocationId,
+                        RequestId = scheduleForm.RequestId,
+                        Description = scheduleForm.Description,
+                        IDD = scheduleForm.IDD,
+                        IDS = scheduleForm.IDS,
+                        DaysAmount = scheduleForm.DaysAmount,
+                        IsAllDay = scheduleForm.IsAllDay,
+                        PRI_PraId = scheduleForm.PRI_PraId,
+                        DZL_DzlId = scheduleForm.DZL_DzlId,
+                        RecurrenceRule = scheduleForm.RecurrenceRule,
+                        RecurrenceID = scheduleForm.RecurrenceID,
+                        RecurrenceException = scheduleForm.RecurrenceException,
+                        Stan = scheduleForm.Stan,
+                        Status = scheduleForm.Status,
+                        CreatedBy = scheduleForm.CreatedBy,
+                        Color = scheduleForm.Color,
+                        Style = scheduleForm.Style,
+                    });
+                }
+
+                return eventData;
+            }
+            catch (Exception ex)
+            {
+                this.snackbarNotification.Add(ex.Message, Severity.Error);
+                Log.Fatal(ex, "Fatal error");
+                return null;
+            }
         }
 
         public async Task Insert(ScheduleForm appointment)
         {
-            var app = new ScheduleForm();
-            var userDetails = await this.userDetailsService.GetUserAllDetailsAsync();
-
-            app.Type = appointment.Type;
-            app.StartTime = appointment.StartTime;
-            DateTime endTime = appointment.EndTime;
-            if (appointment.RecurrenceRule != null)
+            try
             {
-                app.EndTime = appointment.StartTime.Date + endTime.TimeOfDay;
+                var app = new ScheduleForm();
+                var userDetails = await this.userDetailsService.GetUserAllDetailsAsync();
+
+                app.Type = appointment.Type;
+                app.StartTime = appointment.StartTime;
+                DateTime endTime = appointment.EndTime;
+                if (appointment.RecurrenceRule != null)
+                {
+                    app.EndTime = appointment.StartTime.Date + endTime.TimeOfDay;
+                }
+                else
+                {
+                    app.EndTime = appointment.EndTime;
+                }
+
+                app.LocationId = appointment.LocationId;
+                app.RequestId = appointment.RequestId;
+                app.Description = appointment.Description;
+                app.IDS = appointment.IDS;
+                app.IDD = appointment.IDD;
+                app.IsAllDay = appointment.IsAllDay;
+                if (appointment.Type == "Wniosek")
+                {
+                    app.DaysAmount = await this.CountWeekdaysAmount(appointment.StartTime, appointment.EndTime);
+                }
+
+                app.DZL_DzlId = appointment.DZL_DzlId;
+                app.PRI_PraId = appointment.PRI_PraId;
+                app.RecurrenceRule = appointment.RecurrenceRule;
+                app.RecurrenceID = appointment.RecurrenceID;
+                app.RecurrenceException = appointment.RecurrenceException;
+                app.Stan = "Plan";
+                if (appointment.Type == "Wniosek")
+                {
+                    app.Status = "Plan";
+                }
+
+                app.CreatedBy = userDetails?.SamAccountName;
+
+                this.snackbarNotification.Add("Dodano rekord", Severity.Success);
+                await this.repository.InsertAsync(app);
             }
-            else
+            catch (Exception ex)
             {
-                app.EndTime = appointment.EndTime;
+                this.snackbarNotification.Add(ex.Message, Severity.Error);
+                Log.Fatal(ex, "Fatal error");
             }
-
-            app.LocationId = appointment.LocationId;
-            app.RequestId = appointment.RequestId;
-            app.Description = appointment.Description;
-            app.IDS = appointment.IDS;
-            app.IDD = appointment.IDD;
-            app.IsAllDay = appointment.IsAllDay;
-            if (appointment.Type == "Wniosek")
-            {
-                app.DaysAmount = await this.CountWeekdaysAmount(appointment.StartTime, appointment.EndTime);
-            }
-
-            app.DZL_DzlId = appointment.DZL_DzlId;
-            app.PRI_PraId = appointment.PRI_PraId;
-            app.RecurrenceRule = appointment.RecurrenceRule;
-            app.RecurrenceID = appointment.RecurrenceID;
-            app.RecurrenceException = appointment.RecurrenceException;
-            app.Stan = "Plan";
-            if (appointment.Type == "Wniosek")
-            {
-                app.Status = "Plan";
-            }
-
-            app.CreatedBy = userDetails?.SamAccountName;
-
-            await this.repository.InsertAsync(app);
         }
 
         public async Task Update(ScheduleForm appointment)
@@ -242,46 +303,75 @@ namespace SoftlandERPGrafik.Web.Components.Services
                         }
                     }
 
+                    this.snackbarNotification.Add("Zmodyfikowano rekord", Severity.Info);
                     await this.repository.UpdateAsync(app);
                 }
             }
             catch (Exception ex)
             {
-                LoggerExtensions.LogError(this.logger, "ERROR: {Message}", ex.Message);
+                this.snackbarNotification.Add(ex.Message, Severity.Error);
+                Log.Fatal(ex, "Fatal error");
             }
         }
 
         public async Task Delete(Guid appointmentId)
         {
-            await this.repository.DeleteAsync(appointmentId);
+            try
+            {
+                this.snackbarNotification.Add("Usunięto rekord", Severity.Warning);
+                await this.repository.DeleteAsync(appointmentId);
+            }
+            catch (Exception ex)
+            {
+                this.snackbarNotification.Add(ex.Message, Severity.Error);
+                Log.Fatal(ex, "Fatal error");
+            }
         }
 
         public async Task<IEnumerable<OgolneWnioski>> GetWnioskiAsync()
         {
-            var wnioski = await this.wnioskiRepository.GetAllAsync();
+            try
+            {
+                var wnioski = await this.wnioskiRepository.GetAllAsync();
 
-            var wnioskiOrder = wnioski?.OrderBy(s => s?.Wartosc);
+                var wnioskiOrder = wnioski?.OrderBy(s => s?.Wartosc);
 
-            return wnioskiOrder;
+                return wnioskiOrder;
+            }
+            catch (Exception ex)
+            {
+                this.snackbarNotification.Add(ex.Message, Severity.Error);
+                Log.Fatal(ex, "Fatal error");
+                return null;
+            }
         }
 
         public async Task<int> CountWeekdaysAmount(DateTime startTime, DateTime endTime)
         {
-            var daysBetween = Enumerable.Range(0, (int)(endTime - startTime).TotalDays).Select(offset => startTime.AddDays(offset));
-            var holidays = await this.GetHolidaysAsync();
-            List<DateTime> holidayDateList = holidays.Select(x => x.Data).ToList();
-
-            int weekdaysAmount = 0;
-
-            foreach (var day in daysBetween)
+            try
             {
-                if (day.DayOfWeek != DayOfWeek.Saturday && day.DayOfWeek != DayOfWeek.Sunday && !holidayDateList.Contains(day.Date))
-                {
-                    weekdaysAmount++;
-                }
-            }
+                var daysBetween = Enumerable.Range(0, (int)(endTime - startTime).TotalDays).Select(offset => startTime.AddDays(offset));
+                var holidays = await this.GetHolidaysAsync();
+                List<DateTime> holidayDateList = holidays.Select(x => x.Data).ToList();
 
-            return weekdaysAmount;
+                int weekdaysAmount = 0;
+
+                foreach (var day in daysBetween)
+                {
+                    if (day.DayOfWeek != DayOfWeek.Saturday && day.DayOfWeek != DayOfWeek.Sunday && !holidayDateList.Contains(day.Date))
+                    {
+                        weekdaysAmount++;
+                    }
+                }
+
+                return weekdaysAmount;
+            }
+            catch (Exception ex)
+            {
+                this.snackbarNotification.Add(ex.Message, Severity.Error);
+                Log.Fatal(ex, "Fatal error");
+                return 0;
+            }
         }
 
         public IEnumerable<ScheduleHistoryForm> GetEventHistory(Guid id)
@@ -296,6 +386,8 @@ namespace SoftlandERPGrafik.Web.Components.Services
             }
             catch (Exception ex)
             {
+                this.snackbarNotification.Add(ex.Message, Severity.Error);
+                Log.Fatal(ex, "Fatal error");
             }
 
             return Enumerable.Empty<ScheduleHistoryForm>();
