@@ -69,7 +69,7 @@
                     <ToolbarItem PrefixIcon="e-icons e-plus" TooltipText="Nowe wydarzenie" Text="Nowe wydarzenie" OnClick="OnNewEventAdd" TabIndex=0></ToolbarItem>
                     <ToolbarItem PrefixIcon="e-icons e-repeat" TooltipText="Nowe wydarzenie cykliczne" Text="Nowe wydarzenie cykliczne" OnClick="OnNewRecurringEventAdd" TabIndex=0></ToolbarItem>
                     <ToolbarItem PrefixIcon="e-icons e-refresh" TooltipText="Odśwież" Text="Odśwież" OnClick="@(() => this.ScheduleRef.RefreshEventsAsync())" TabIndex="0"></ToolbarItem>
-                    @if (this.Kierownik.Any(o => o.PRI_Opis == this.userDetails?.SamAccountName) || this.signedInGroup.Contains("S_ADM_IT") || this.signedInGroup.Contains("S_ADM_KADRY"))
+                    @if (this.Kierownik.Any(o => o.PRI_Opis == this.userDetails?.SamAccountName) || this.signedInGroup.Contains("S_ADM_IT") || this.signedInGroup.Contains("S_ADM_KADRY") || this.userDetails?.SamAccountName== "LSZ")
                     {
                         <ToolbarItem PrefixIcon="e-icons e-rename" TooltipText="Zmiana stanów" Text="Zmiana stanów" OnClick="@(() => { VisibilityChangeStanAll = true;})" TabIndex="0"></ToolbarItem>
                     }
@@ -285,7 +285,7 @@
                                     var startTimeDate = startTime?.Date;
                                     disableStateAdd = !(startTimeDate.HasValue && startTimeDate.Value >= todayDate);
                                     disableStateReadOnly = isReadOnly ? true : false;
-                                    if (signedInGroup.Contains("S_ADM_IT") || signedInGroup.Contains("S_ADM_KADRY"))
+                                    if (signedInGroup.Contains("S_ADM_IT") || signedInGroup.Contains("S_ADM_KADRY") || this.userDetails?.SamAccountName == "LSZ")
                                     {
                                         isAuthorizedManager = Data?.DZL_DzlId;
                                         disableStateReadOnly = false;
@@ -394,7 +394,7 @@
                                     {
                                         enableStateB = true;
                                     }
-                                    else if (isManager)
+                                    else if (isManager || this.userDetails?.SamAccountName == "LSZ")
                                     {
                                         enableStateA = true;
                                     }
@@ -543,7 +543,7 @@
                                                     </div>
                                                 </td>
                                             </tr>
-                                            @if (Data.Stan != null || isManager || (signedInGroup.Contains("S_ADM_IT") || signedInGroup.Contains("S_ADM_KADRY")))
+                                            @if (Data.Stan != null || isManager || (signedInGroup.Contains("S_ADM_IT") || signedInGroup.Contains("S_ADM_KADRY")) || this.userDetails?.SamAccountName == "LSZ")
                                             {
                                                 <tr>
                                                     <td>

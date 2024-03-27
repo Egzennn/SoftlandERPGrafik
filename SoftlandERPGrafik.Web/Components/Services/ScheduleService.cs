@@ -153,6 +153,8 @@ namespace SoftlandERPGrafik.Web.Components.Services
             {
                 var app = new ScheduleForm();
                 var userDetails = await this.userDetailsService.GetUserAllDetailsAsync();
+                var kierownicy = await this.kierownicyRepository.GetAllAsync();
+                var kierownicyAkronim = kierownicy?.Select(x => x.PRI_Opis).ToList();
 
                 app.Type = appointment.Type;
                 app.StartTime = appointment.StartTime;
@@ -182,10 +184,21 @@ namespace SoftlandERPGrafik.Web.Components.Services
                 app.RecurrenceRule = appointment.RecurrenceRule;
                 app.RecurrenceID = appointment.RecurrenceID;
                 app.RecurrenceException = appointment.RecurrenceException;
-                app.Stan = "Plan";
-                if (appointment.Type == "Wniosek")
+                if (kierownicyAkronim.Contains(userDetails.SamAccountName) || userDetails.SamAccountName == "ASE" || userDetails.SamAccountName == "BWL" || userDetails.SamAccountName == "LSZ")
                 {
-                    app.Status = "Plan";
+                    app.Stan = appointment.Stan;
+                    if (appointment.Type == "Wniosek")
+                    {
+                        app.Status = appointment.Status;
+                    }
+                }
+                else
+                {
+                    app.Stan = "Plan";
+                    if (appointment.Type == "Wniosek")
+                    {
+                        app.Status = "Plan";
+                    }
                 }
 
                 app.CreatedBy = userDetails?.SamAccountName;
@@ -286,7 +299,7 @@ namespace SoftlandERPGrafik.Web.Components.Services
                     app.RecurrenceException = appointment.RecurrenceException;
                     app.Updated = DateTime.Now;
                     app.UpdatedBy = userDetails?.SamAccountName;
-                    if (kierownicyAkronim.Contains(userDetails.SamAccountName) || userDetails.SamAccountName == "ASE" || userDetails.SamAccountName == "BWL")
+                    if (kierownicyAkronim.Contains(userDetails.SamAccountName) || userDetails.SamAccountName == "ASE" || userDetails.SamAccountName == "BWL" || userDetails.SamAccountName == "LSZ")
                     {
                         app.Stan = appointment.Stan;
                         if (appointment.Type == "Wniosek")
