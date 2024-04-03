@@ -783,16 +783,16 @@
                              </SfMultiSelect>
                          </div>
                     }
-                    @*                 @if (showThirdMultiSelect)
+                                    @if (showThirdMultiSelect)
                 {
                 <div class="col-row">
                 <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="RequestRef" TValue="Guid[]" TItem="OgolneWnioski" DataSource="@WnioskiData" Placeholder="Rodzaj wniosku" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
                 <MultiSelectFieldSettings Text="Wartosc" Value="Id"></MultiSelectFieldSettings>
+                                <MultiSelectEvents TValue="Guid[]" TItem="OgolneWnioski" ValueChange="@(args => OnMultiSelectRequestChange(args, "RequestId"))"></MultiSelectEvents>
                 </SfMultiSelect>
-                <MultiSelectEvents TValue="Guid[]" TItem="OgolneWnioski" ValueChange="@(args => OnMultiSelectRequestChange(args, "RequestId"))"></MultiSelectEvents>
                 </div>
                 }
-                *@                <div class="col-row">
+                               <div class="col-row">
                         <SfTextBox ID="events-search" Placeholder='Wprowadz opis' @bind-Value="@SearchValue" OnChange="@OnEventSearch"></SfTextBox>
                     </div>
                 </div>

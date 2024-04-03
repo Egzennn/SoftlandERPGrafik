@@ -649,24 +649,24 @@
 
         public void OnMultiSelectRequestChange(Syncfusion.Blazor.DropDowns.MultiSelectChangeEventArgs<Guid[]> args, string field)
         {
-            //WhereFilter predicate;
+            WhereFilter predicate;
 
-            //if (args.Value != null)
-            //{
-            //    var filters = args.Value.Select(id => new WhereFilter
-            //    {
-            //        Field = field,
-            //        Operator = "equal",
-            //        value = id,
-            //    });
+            if (args.Value != null)
+            {
+                var filters = args.Value.Select(id => new WhereFilter
+                {
+                    Field = field,
+                    Operator = "equal",
+                    value = id,
+                });
 
-            //    predicate = filters.Aggregate((filter1, filter2) => filter1.Or(filter2));
-            //    this.LocalizationQuery = new Query().AddParams("RequestId", args.Value);
-            //}
-            //else
-            //{
-            //    this.LocalizationQuery = new Query();
-            //}
+                predicate = filters.Aggregate((filter1, filter2) => filter1.Or(filter2));
+                this.LocalizationQuery = new Query().AddParams("RequestId", args.Value);
+            }
+            else
+            {
+                this.LocalizationQuery = new Query();
+            }
         }
 
         private async void ChangeVisibility()
