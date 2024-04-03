@@ -290,7 +290,6 @@ namespace SoftlandERPGrafik.Web.Components.Services
                     {
                         app.DaysAmount = await this.CountWeekdaysAmount(appointment.StartTime, appointment.EndTime);
                     }
-
                     app.PRI_PraId = appointment.PRI_PraId;
                     app.DZL_DzlId = appointment.DZL_DzlId;
                     app.IsAllDay = appointment.IsAllDay;

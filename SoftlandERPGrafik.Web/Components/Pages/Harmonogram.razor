@@ -69,7 +69,7 @@
                     <ToolbarItem PrefixIcon="e-icons e-plus" TooltipText="Nowe wydarzenie" Text="Nowe wydarzenie" OnClick="OnNewEventAdd" TabIndex=0></ToolbarItem>
                     <ToolbarItem PrefixIcon="e-icons e-repeat" TooltipText="Nowe wydarzenie cykliczne" Text="Nowe wydarzenie cykliczne" OnClick="OnNewRecurringEventAdd" TabIndex=0></ToolbarItem>
                     <ToolbarItem PrefixIcon="e-icons e-refresh" TooltipText="Odśwież" Text="Odśwież" OnClick="@(() => this.ScheduleRef.RefreshEventsAsync())" TabIndex="0"></ToolbarItem>
-                    @if (this.Kierownik.Any(o => o.PRI_Opis == this.userDetails?.SamAccountName) || this.signedInGroup.Contains("S_ADM_IT") || this.signedInGroup.Contains("S_ADM_KADRY") || this.userDetails?.SamAccountName== "LSZ")
+                    @if (this.Kierownik.Any(o => o.PRI_Opis == this.userDetails?.SamAccountName) || this.signedInGroup.Contains("S_ADM_IT") || this.signedInGroup.Contains("S_ADM_KADRY") || this.userDetails?.SamAccountName == "LSZ")
                     {
                         <ToolbarItem PrefixIcon="e-icons e-rename" TooltipText="Zmiana stanów" Text="Zmiana stanów" OnClick="@(() => { VisibilityChangeStanAll = true;})" TabIndex="0"></ToolbarItem>
                     }
@@ -318,7 +318,7 @@
                                                       OnClick="@(e => OnMoreDetailsClick(e, Data, true))" Disabled="@disableStateReadOnly" />
                                             @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
                                             {
-                                                <SfButton CssClass="e-event-delete" Content="Usuń" OnClick="@(e => OnDelete(Data))" Disabled="@disableStateReadOnly" />
+                                                <SfButton CssClass="e-event-deletebtn" Content="Usuń" OnClick="@(e => OnDelete(Data))" Disabled="@disableStateReadOnly" />
                                             }
                                         }
                                     }
@@ -606,51 +606,102 @@
                         <SfDialog IsModal="true" Header="@headerEditStan" Width="285px" Height="225px" ShowCloseIcon="true" @bind-Visible="VisibilityChangeStanAll">
                             <DialogTemplates>
                                 <Content>
-                                            <div class="col-row-dialog">
-                                                <SfMultiSelect TValue="string" TItem="string" DataSource="@Type" Placeholder="Typ" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                                                    <MultiSelectFieldSettings Text="Type" Value="Type"></MultiSelectFieldSettings>
-                                                    <MultiSelectEvents TValue="string" TItem="string" ValueChange="@(args => OnTypeChange(args))"></MultiSelectEvents>
-                                                </SfMultiSelect>
-                                            </div>
-                                            <div class="col-row-dialog">
-                                                <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="ResourceRef" TValue="int[]" TItem="OsobaData" DataSource="@OsobyForDialog" Placeholder="Imię i nazwisko" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                                                    <MultiSelectFieldSettings GroupBy="DZL_Kod" Text="Imie_Nazwisko" Value="PRI_PraId"></MultiSelectFieldSettings>
-                                                    <MultiSelectEvents TValue="int[]" TItem="OsobaData" ValueChange="@(args => OnPracownikChange(args))"></MultiSelectEvents>
-                                                </SfMultiSelect>
-                                            </div>
-                                </Content>
-                            </DialogTemplates>
-                            <DialogButtons>
-                                <DialogButton Content="Zmień" IsPrimary="true" OnClick="@ChangeStanAll" />
-                            </DialogButtons>
-                        </SfDialog>
-                    </div>
-                    @if (!ShowEventHistory)
+                                    <div class="col-row-dialog">
+                                        <SfMultiSelect TValue="string" TItem="string" DataSource="@Type" Placeholder="Typ" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                             <MultiSelectFieldSettings Text="Type" Value="Type"></MultiSelectFieldSettings>
+                                             <MultiSelectEvents TValue="string" TItem="string" ValueChange="@(args => OnTypeChange(args))"></MultiSelectEvents>
+                                         </SfMultiSelect>
+                                     </div>
+                                     <div class="col-row-dialog">
+                                         <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="ResourceRef" TValue="int[]" TItem="OsobaData" DataSource="@OsobyForDialog" Placeholder="Imię i nazwisko" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                             <MultiSelectFieldSettings GroupBy="DZL_Kod" Text="Imie_Nazwisko" Value="PRI_PraId"></MultiSelectFieldSettings>
+                                             <MultiSelectEvents TValue="int[]" TItem="OsobaData" ValueChange="@(args => OnPracownikChange(args))"></MultiSelectEvents>
+                                         </SfMultiSelect>
+                                     </div>
+                                 </Content>
+                             </DialogTemplates>
+                             <DialogButtons>
+                                 <DialogButton Content="Zmień" IsPrimary="true" OnClick="@ChangeStanAll" />
+                             </DialogButtons>
+                         </SfDialog>
+                     </div>
+                     @if (!ShowEventHistory)
                     {
                         <MudDataGrid Items="@eventHistorygridDataSource" Dense Filterable="true" FilterMode="DataGridFilterMode.Simple">
-                            <Columns>
-                                <PropertyColumn Property="x =>x.Created" Title="Data" Format="g"></PropertyColumn>
-                                <PropertyColumn Property="x =>x.Column" Title="Kolumna"></PropertyColumn>
-                                <PropertyColumn Property="x =>x.Before" Title="Przed"></PropertyColumn>
-                                <PropertyColumn Property="x =>x.After" Title="Po"></PropertyColumn>
-                                <PropertyColumn Property="x =>x.CreatedBy" Title="Utworzono przez"></PropertyColumn>
-
+                                 <Columns>
+                                     <PropertyColumn Property="x => x.Created" Title="Data" Format="g" ></PropertyColumn>
+                                     <PropertyColumn Property="x => x.Column" Title="Kolumna"></PropertyColumn>
+                                     <TemplateColumn Title="Przed">
+                                         <CellTemplate>
+                                             @{
+                                            var cellContext = (CellContext<ScheduleHistoryForm>)context;
+                                            string przedData = string.Empty;
+                                            switch (cellContext.Item.Column)
+                                            {
+                                                case "Lokalizacja":
+                                                    var dzialData = GetLocationDataByLokId(int.Parse(cellContext.Item.Before));
+                                                    przedData = dzialData.Wartosc;
+                                                    break;
+                                                case "Wniosek":
+                                                    var beforeGuidString = cellContext.Item.Before; // Usuwa klamry z przodu i z tyłu, jeśli przedGuidString nie jest null
+                                                    if (beforeGuidString != null && Guid.TryParse(beforeGuidString, out var beforeGuid))
+                                                    {
+                                                        var wniosekData = GetWniosekDataByRequestId(beforeGuid);
+                                                        przedData = wniosekData.Wartosc;
+                                                    }
+                                                    break;
+                                                default:
+                                                    przedData = cellContext.Item.Before;
+                                                    break;
+                                            }
+                                        }
+                                        @przedData
+                                    </CellTemplate>
+                                </TemplateColumn>
+                                <TemplateColumn Title="Po">
+                                    <CellTemplate>
+                                        @{
+                                            var cellContext = (CellContext<ScheduleHistoryForm>)context;
+                                            string przedData = string.Empty;
+                                            switch (cellContext.Item.Column)
+                                            {
+                                                case "Lokalizacja":
+                                                    var dzialData = GetLocationDataByLokId(int.Parse(cellContext.Item.After));
+                                                    przedData = dzialData.Wartosc;
+                                                    break;
+                                                case "Wniosek":
+                                                    var beforeGuidString = cellContext.Item.After; // Usuwa klamry z przodu i z tyłu, jeśli przedGuidString nie jest null
+                                                    if (beforeGuidString != null && Guid.TryParse(beforeGuidString, out var beforeGuid))
+                                                    {
+                                                        var wniosekData = GetWniosekDataByRequestId(beforeGuid);
+                                                        przedData = wniosekData.Wartosc;
+                                                    }
+                                                    break;
+                                                default:
+                                                    przedData = cellContext.Item.After;
+                                                    break;
+                                            }
+                                        }
+                                        @przedData
+                                    </CellTemplate>
+                                </TemplateColumn>
+                                <PropertyColumn Property="x => x.CreatedBy" Title="Utworzono przez"></PropertyColumn>
                             </Columns>
                         </MudDataGrid>
                     }
                     @if (!ShowSchedule)
                     {
                         <MudDataGrid Items="@gridDataSource" Dense Filterable="true" FilterMode="DataGridFilterMode.Simple">
-                            <Columns>
-                                <TemplateColumn Title="Dział">
-                                    <CellTemplate>
-                                        @{
-                                            var cellContext = (CellContext<ScheduleForm>)context;
-                                            var dzialData = GetDzialDataByDzlId(cellContext.Item.DZL_DzlId);
-                                        }
-                                        @dzialData.DZL_Kod
-                                    </CellTemplate>
-                                </TemplateColumn>
+                                 <Columns>
+                                    <TemplateColumn Title="Dział">
+                                        <CellTemplate>
+                                             @{
+                                                var cellContext = (CellContext<ScheduleForm>)context;
+                                                var dzialData = GetDzialDataByDzlId(cellContext.Item.DZL_DzlId);
+                                            }
+                                            @dzialData.DZL_Kod
+                                        </CellTemplate>
+                                    </TemplateColumn>
                                 <TemplateColumn Title="Imie i Nazwisko">
                                     <CellTemplate>
                                         @{
@@ -707,30 +758,30 @@
                     <MudDivider DividerType="DividerType.Middle" Class="my-6" />
                     <div class="col-row">
                         <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="DepartamentRef" TValue="int[]" TItem="ZatrudnieniDzialy" DataSource="@Dzialy" Placeholder="Dział" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                            <MultiSelectFieldSettings Text="DZL_Kod" Value="DZL_DzlId"></MultiSelectFieldSettings>
-                            <MultiSelectEvents TValue="int[]" TItem="ZatrudnieniDzialy" ValueChange="@(args => OnMultiSelectChange(args, "DZL_DzlId"))"></MultiSelectEvents>
-                        </SfMultiSelect>
-                    </div>
-                    <div class="col-row">
-                        <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="ResourceRef" TValue="int[]" TItem="OsobaData" DataSource="@Osoby" Placeholder="Imię i nazwisko" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                            <MultiSelectFieldSettings GroupBy="DZL_Kod" Text="Imie_Nazwisko" Value="PRI_PraId"></MultiSelectFieldSettings>
-                            <MultiSelectEvents TValue="int[]" TItem="OsobaData" ValueChange="@(args => OnMultiSelectChange(args, "PRI_PraId"))"></MultiSelectEvents>
-                        </SfMultiSelect>
-                    </div>
-                    <div class="col-row">
-                        <SfMultiSelect Mode="@VisualMode.CheckBox" TValue="string[]" TItem="string" DataSource="@Type" Placeholder="Typ" ValueChanged="OnTypeChange" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                            <MultiSelectFieldSettings Text="Type"></MultiSelectFieldSettings>
-                            <MultiSelectEvents TValue="string[]" TItem="string" ValueChange="@(args => OnMultiSelectTypeChange(args, "Type"))"></MultiSelectEvents>
-                        </SfMultiSelect>
-                    </div>
-                    @if (showSecondMultiSelect)
+                             <MultiSelectFieldSettings Text="DZL_Kod" Value="DZL_DzlId"></MultiSelectFieldSettings>
+                             <MultiSelectEvents TValue="int[]" TItem="ZatrudnieniDzialy" ValueChange="@(args => OnMultiSelectChange(args, "DZL_DzlId"))"></MultiSelectEvents>
+                         </SfMultiSelect>
+                     </div>
+                     <div class="col-row">
+                         <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="ResourceRef" TValue="int[]" TItem="OsobaData" DataSource="@Osoby" Placeholder="Imię i nazwisko" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                             <MultiSelectFieldSettings GroupBy="DZL_Kod" Text="Imie_Nazwisko" Value="PRI_PraId"></MultiSelectFieldSettings>
+                             <MultiSelectEvents TValue="int[]" TItem="OsobaData" ValueChange="@(args => OnMultiSelectChange(args, "PRI_PraId"))"></MultiSelectEvents>
+                         </SfMultiSelect>
+                     </div>
+                     <div class="col-row">
+                         <SfMultiSelect Mode="@VisualMode.CheckBox" TValue="string[]" TItem="string" DataSource="@Type" Placeholder="Typ" ValueChanged="OnTypeChange" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                             <MultiSelectFieldSettings Text="Type"></MultiSelectFieldSettings>
+                             <MultiSelectEvents TValue="string[]" TItem="string" ValueChange="@(args => OnMultiSelectTypeChange(args, "Type"))"></MultiSelectEvents>
+                         </SfMultiSelect>
+                     </div>
+                     @if (showSecondMultiSelect)
                     {
                         <div class="col-row">
                             <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="LocationRef" TValue="int[]" TItem="OrganizacjaLokalizacje" DataSource="@LocalizationData" Placeholder="Lokalizacja" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                                <MultiSelectFieldSettings Text="Wartosc" Value="Lok_LokId"></MultiSelectFieldSettings>
-                                <MultiSelectEvents TValue="int[]" TItem="OrganizacjaLokalizacje" ValueChange="@(args => OnMultiSelectChange(args, "LocationId"))"></MultiSelectEvents>
-                            </SfMultiSelect>
-                        </div>
+                                 <MultiSelectFieldSettings Text="Wartosc" Value="Lok_LokId"></MultiSelectFieldSettings>
+                                 <MultiSelectEvents TValue="int[]" TItem="OrganizacjaLokalizacje" ValueChange="@(args => OnMultiSelectChange(args, "LocationId"))"></MultiSelectEvents>
+                             </SfMultiSelect>
+                         </div>
                     }
                     @*                 @if (showThirdMultiSelect)
                 {
@@ -755,12 +806,11 @@ else
 }
 
 <style>
-    .e-flat .e-event-delete .e-schedule-dialog {
-        visibility: hidden;
+    .e-event-delete {
+        display: none;
     }
 
-    .col-row-dialog
-    {
+    .col-row-dialog {
         display: flex;
         flex-wrap: wrap;
         margin-bottom: 1rem;
@@ -785,9 +835,9 @@ else
     }
 
     /*         .schedule-cell-customization.e-schedule .e-month-view .e-work-cells:not(.e-work-days) {
-                                                            background-color: #2a416f14 !important;
-                                                        }
-                                                 */
+                                                                    background-color: #2a416f14 !important;
+                                                                }
+                                                         */
     .cell-custom-class {
         background: #42ecf5 !important;
     }

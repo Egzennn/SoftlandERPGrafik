@@ -465,6 +465,7 @@
             Dictionary<string, object> attributes = new Dictionary<string, object>();
             DateTime endTime = args.Data.EndTime;
             var eventHistory = this.CheckEventHistory(args.Data.Id);
+            bool delegacja = args.Data.RequestId == Guid.Parse("2493C407-54C9-4B2F-82C6-166E1865A165");
 
             string backgroundColor = args.Data.Color;
             string borderColor = "border-color: rgba(42, 65, 111, 0.2)";
@@ -485,6 +486,14 @@
                 args.Data.IsReadonly = true;
                 attributes.Add("class", "e-read-only");
             }
+
+            var item = args.Data.StartTime;
+            HolidaysDate holidays = new HolidaysDate();
+            bool exist = holidays.dateCollection.Any(d => d.Year == item.Year && d.Month == item.Month && d.Day == item.Day);
+            if (exist && !delegacja)
+            {
+                args.Cancel = true;
+            }
         }
 
         public void OnPopupOpen(PopupOpenEventArgs<ScheduleForm> args)
@@ -499,9 +508,9 @@
         }
 
         // Wyszukiwarka
-        private T GetDataById<T>(int? id, IEnumerable<T> data, Func<T, int> idSelector, Func<T> createDefault)
+        private T GetDataById<T, TKey>(TKey id, IEnumerable<T> data, Func<T, TKey> idSelector, Func<T> createDefault)
         {
-            var item = data.FirstOrDefault(d => idSelector(d) == id);
+            var item = data.FirstOrDefault(d => idSelector(d).Equals(id));
             return item ?? createDefault();
         }
 
@@ -518,6 +527,11 @@
         private OrganizacjaLokalizacje GetLocationDataByLokId(int? id)
         {
             return this.GetDataById(id, this.LocalizationData, d => d.Lok_LokId, () => new OrganizacjaLokalizacje());
+        }
+
+        private OgolneWnioski GetWniosekDataByRequestId(Guid requestId)
+        {
+            return GetDataById(requestId, WnioskiData, w => w.Id, () => new OgolneWnioski());
         }
 
         public async Task OnEventSearch()
