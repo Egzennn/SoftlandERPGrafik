@@ -933,8 +933,8 @@
                                                 select new ScheduleForm
                                                 {
                                                     Imie_Nazwisko = os.Imie_Nazwisko,
-                                                    StartTime = data.StartTime,
-                                                    EndTime = data.EndTime,
+                                                    StartTime = data.StartTime.Date,
+                                                    EndTime = data.EndTime.AddDays(-1),
                                                     Dzial = dzial.DZL_Kod,
                                                     Wniosek = wniosek.Wartosc,
                                                     Description = data.Description,
@@ -942,14 +942,13 @@
 
                     exportDatas.AddRange(datas);
                 }
-
                 ExportOptions options = new ExportOptions()
                 {
                     ExportType = ExcelFormat.Xlsx,
                     CustomData = exportDatas,
                     FieldsInfo = exportFields,
                     Fields = new string[] { "Dzial", "Imie_Nazwisko", "Wniosek", "Description", "StartTime", "EndTime" },
-                    DateFormat = this.DateFormat + " " + this.TimeFormat,
+                    DateFormat = this.DateFormat /*+ " " + this.TimeFormat*/,
                     FileName = "Wnioski na dzień " + DateTime.UtcNow.ToLocalTime(),
                 };
                 await this.ScheduleRef.ExportToExcelAsync(options);
