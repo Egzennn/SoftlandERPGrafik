@@ -184,7 +184,7 @@ namespace SoftlandERPGrafik.Web.Components.Services
                 app.RecurrenceRule = appointment.RecurrenceRule;
                 app.RecurrenceID = appointment.RecurrenceID;
                 app.RecurrenceException = appointment.RecurrenceException;
-                if (kierownicyAkronim.Contains(userDetails.SamAccountName) || userDetails.SamAccountName == "ASE" || userDetails.SamAccountName == "BWL" || userDetails.SamAccountName == "LSZ")
+                if (kierownicyAkronim.Contains(userDetails.SamAccountName) || userDetails.SamAccountName == "ASE" || userDetails.SamAccountName == "BWL" /*|| userDetails.SamAccountName == "LSZ"*/)
                 {
                     app.Stan = appointment.Stan;
                     if (appointment.Type == "Wniosek")
@@ -298,7 +298,7 @@ namespace SoftlandERPGrafik.Web.Components.Services
                     app.RecurrenceException = appointment.RecurrenceException;
                     app.Updated = DateTime.Now;
                     app.UpdatedBy = userDetails?.SamAccountName;
-                    if (kierownicyAkronim.Contains(userDetails.SamAccountName) || userDetails.SamAccountName == "ASE" || userDetails.SamAccountName == "BWL" || userDetails.SamAccountName == "LSZ")
+                    if (kierownicyAkronim.Contains(userDetails.SamAccountName) || userDetails.SamAccountName == "ASE" || userDetails.SamAccountName == "BWL" /*|| userDetails.SamAccountName == "LSZ"*/)
                     {
                         app.Stan = appointment.Stan;
                         if (appointment.Type == "Wniosek")

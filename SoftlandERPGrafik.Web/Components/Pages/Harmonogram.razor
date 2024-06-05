@@ -278,6 +278,8 @@
                                     var dzlDzlId = Data?.DZL_DzlId;
                                     var isAuthorizedManager = DepartmentManagerCRUD();
                                     var startTime = Data?.StartTime;
+                                    var stan = Data?.Stan;
+                                    var status = Data?.Status;
                                     var disableStateReadOnly = false;
                                     var disableStateAdd = false;
                                     var disableEventHistoryReadonly = CheckEventHistory(Data.Id);
@@ -285,35 +287,43 @@
                                     var startTimeDate = startTime?.Date;
                                     disableStateAdd = !(startTimeDate.HasValue && startTimeDate.Value >= todayDate);
                                     disableStateReadOnly = isReadOnly ? true : false;
-                                    if (signedInGroup.Contains("S_ADM_IT") || signedInGroup.Contains("S_ADM_KADRY") || this.userDetails?.SamAccountName == "LSZ")
+                                    @if (signedInGroup.Contains("S_ADM_IT") || signedInGroup.Contains("S_ADM_KADRY"))
                                     {
                                         isAuthorizedManager = Data?.DZL_DzlId;
                                         disableStateReadOnly = false;
                                     }
+                                    else if (stan != "Plan")
+                                    {
+                                        disableStateReadOnly = true;
+                                    }
                                 }
                                 <div class="cell-footer">
+                                    @if (!isAddMode)
+                                    {
+                                        @if (ShowEventHistory == true)
+                                        {
+                                            <SfButton CssClass="e-event-edit" Content="Historia" Disabled="@disableEventHistoryReadonly" OnClick="@(e => GetEventHistoryGrid(Data.Id))" />
+                                        }
+                                        else
+                                        {
+                                            <SfButton CssClass="e-event-edit" Content="Zamknij" OnClick="@(() => ShowEventHistory = true)" />
+                                        }
+                                    }
                                     @if (priPraId != 0 && ((isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))
                                    || (!isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))))
                                     {
+                                         if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
+                                         {
+                                             disableStateAdd = false;
+                                             disableStateReadOnly = false;
+                                         }
+
                                         @if (isAddMode)
                                         {
-                                            if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
-                                            {
-                                                disableStateAdd = false;
-                                            }
-
                                             <SfButton Content="Dodaj" OnClick="@(e => OnMoreDetailsClick(e, Data, false))" Disabled="@disableStateAdd" />
                                         }
                                         else
                                         {
-                                            @if (ShowEventHistory == true)
-                                            {
-                                                <SfButton CssClass="e-event-edit" Content="Historia" Disabled="@disableEventHistoryReadonly" OnClick="@(e => GetEventHistoryGrid(Data.Id))" />
-                                            }
-                                            else
-                                            {
-                                                <SfButton CssClass="e-event-edit" Content="Zamknij" OnClick="@(() => ShowEventHistory = true)" />
-                                            }
                                             <SfButton CssClass="e-event-edit" Content="Edycja"
                                                       OnClick="@(e => OnMoreDetailsClick(e, Data, true))" Disabled="@disableStateReadOnly" />
                                             @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
@@ -321,9 +331,66 @@
                                                 <SfButton CssClass="e-event-deletebtn" Content="Usuń" OnClick="@(e => OnDelete(Data))" Disabled="@disableStateReadOnly" />
                                             }
                                         }
-                                    }
+                                   }
                                 </div>
                             </FooterTemplate>
+                            @*                             <FooterTemplate>
+                        @{
+                        ScheduleForm Data = (context as ScheduleForm);
+                        var isReadOnly = Data?.IsReadonly ?? false;
+                        var isAddMode = (Data?.CreatedBy == null);
+                        var priPraId = Data?.PRI_PraId;
+                        var isAuthorized = IsCurrentUserAuthorized(priPraId);
+                        var dzlDzlId = Data?.DZL_DzlId;
+                        var isAuthorizedManager = DepartmentManagerCRUD();
+                        var startTime = Data?.StartTime;
+                        var disableStateReadOnly = false;
+                        var disableStateAdd = false;
+                        var disableEventHistoryReadonly = CheckEventHistory(Data.Id);
+                        var todayDate = DateTime.Now.Date;
+                        var startTimeDate = startTime?.Date;
+                        disableStateAdd = !(startTimeDate.HasValue && startTimeDate.Value >= todayDate);
+                        disableStateReadOnly = isReadOnly ? true : false;
+                        if (signedInGroup.Contains("S_ADM_IT") || signedInGroup.Contains("S_ADM_KADRY") || this.userDetails?.SamAccountName == "LSZ")
+                        {
+                        isAuthorizedManager = Data?.DZL_DzlId;
+                        disableStateReadOnly = false;
+                        }
+                        }
+                        <div class="cell-footer">
+                        @if (priPraId != 0 && ((isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))
+                        || (!isAddMode && (isAuthorized || (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)))))
+                        {
+                        @if (isAddMode)
+                        {
+                        if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
+                        {
+                        disableStateAdd = false;
+                        }
+
+                        <SfButton Content="Dodaj" OnClick="@(e => OnMoreDetailsClick(e, Data, false))" Disabled="@disableStateAdd" />
+                        }
+                        else
+                        {
+                        @if (ShowEventHistory == true)
+                        {
+                        <SfButton CssClass="e-event-edit" Content="Historia" Disabled="@disableEventHistoryReadonly" OnClick="@(e => GetEventHistoryGrid(Data.Id))" />
+                        }
+                        else
+                        {
+                        <SfButton CssClass="e-event-edit" Content="Zamknij" OnClick="@(() => ShowEventHistory = true)" />
+                        }
+                        <SfButton CssClass="e-event-edit" Content="Edycja"
+                        OnClick="@(e => OnMoreDetailsClick(e, Data, true))" Disabled="@disableStateReadOnly" />
+                        @if (isAuthorizedManager.HasValue && isAuthorizedManager.Value == dzlDzlId)
+                        {
+                        <SfButton CssClass="e-event-deletebtn" Content="Usuń" OnClick="@(e => OnDelete(Data))" Disabled="@disableStateReadOnly" />
+                        }
+                        }
+                        }
+                        </div>
+                        </FooterTemplate>
+                        *@
                         </ScheduleQuickInfoTemplates>
                         <ScheduleTemplates>
                             <CellTemplate>
@@ -624,12 +691,35 @@
                                  <DialogButton Content="Zmień" IsPrimary="true" OnClick="@ChangeStanAll" />
                              </DialogButtons>
                          </SfDialog>
+                         <SfDialog IsModal="true" Header="@headerExport" Width="285px" Height="225px" ShowCloseIcon="true" @bind-Visible="VisibilityExport">
+                             <DialogTemplates>
+                                 <Content>
+                                     @*                                      <div class="e-start-end-row">
+                                <div class="e-start-container">
+                                <SfDatePicker @bind-Value=""></SfDatePicker>
+                                </div>
+                                <span class="e-arrow-container">
+                                <svg width="16" height="16" viewBox="0 0 32 32" fill="#7D90AB" xmlns="http://www.w3.org/2000/svg" class="css-f81u39">
+                                <path d="M21.2913 8.76378L27.5276 15C27.811 15.2835 28 15.7559 28 16.1339C28 16.6063 27.811 16.9843 27.5276 17.2677L21.2913 23.5039C20.6299 24.1654 19.5906 24.1654 18.9291 23.5039C18.2677 22.8425 18.2677 21.8031 18.9291 21.1417L22.3307 17.7402H5.70079C4.75591 17.8346 4 17.0787 4 16.1339C4 15.189 4.75591 14.4331 5.70079 14.4331L22.4252 14.4331L19.0236 11.0315C18.3622 10.3701 18.3622 9.33071 19.0236 8.66929C19.5906 8.10236 20.7244 8.10236 21.2913 8.76378Z" fill="inherit"></path>
+                                </svg>
+                                </span>
+                                <div class="e-end-container">
+                                <SfDatePicker @bind-Value=""></SfDatePicker>
+                                </div>
+                                </div>
+                                *@
+                                 </Content>
+                             </DialogTemplates>
+                             <DialogButtons>
+                                 <DialogButton Content="Zmień" IsPrimary="true" OnClick="@ChangeStanAll" />
+                             </DialogButtons>
+                         </SfDialog>
                      </div>
                      @if (!ShowEventHistory)
                     {
                         <MudDataGrid Items="@eventHistorygridDataSource" Dense Filterable="true" FilterMode="DataGridFilterMode.Simple">
                                  <Columns>
-                                     <PropertyColumn Property="x => x.Created" Title="Data" Format="g" ></PropertyColumn>
+                                     <PropertyColumn Property="x => x.Created" Title="Data" Format="g"></PropertyColumn>
                                      <PropertyColumn Property="x => x.Column" Title="Kolumna"></PropertyColumn>
                                      <TemplateColumn Title="Przed">
                                          <CellTemplate>
@@ -693,15 +783,15 @@
                     {
                         <MudDataGrid Items="@gridDataSource" Dense Filterable="true" FilterMode="DataGridFilterMode.Simple">
                                  <Columns>
-                                    <TemplateColumn Title="Dział">
-                                        <CellTemplate>
+                                     <TemplateColumn Title="Dział">
+                                         <CellTemplate>
                                              @{
-                                                var cellContext = (CellContext<ScheduleForm>)context;
-                                                var dzialData = GetDzialDataByDzlId(cellContext.Item.DZL_DzlId);
-                                            }
-                                            @dzialData.DZL_Kod
-                                        </CellTemplate>
-                                    </TemplateColumn>
+                                            var cellContext = (CellContext<ScheduleForm>)context;
+                                            var dzialData = GetDzialDataByDzlId(cellContext.Item.DZL_DzlId);
+                                        }
+                                        @dzialData.DZL_Kod
+                                    </CellTemplate>
+                                </TemplateColumn>
                                 <TemplateColumn Title="Imie i Nazwisko">
                                     <CellTemplate>
                                         @{
@@ -727,27 +817,6 @@
                             </Columns>
                         </MudDataGrid>
                     }
-                    @*                 <SfContextMenu TValue="MenuItem" CssClass="schedule-context-menu" Target=".e-schedule">
-                <MenuItems>
-                <MenuItem Text="Dzisiaj" IconCss="e-icons e-timeline-today" Id="Today" Hidden="@isCell"></MenuItem>
-                <MenuItem Text="Edytuj wydarzenie" IconCss="e-icons e-edit" Id="Save" Hidden="@isEvent" Disabled="@disableState"></MenuItem>
-                <MenuItem Text="Edytuj wydarzenie" IconCss="e-icons e-edit" Id="EditRecurrenceEvent" Hidden="@isRecurrence" Disabled="@disableState">
-                <MenuItems>
-                <MenuItem Text="Edytuj wystąpienie" Id="EditOccurrence"></MenuItem>
-                <MenuItem Text="Edytuj serie" Id="EditSeries"></MenuItem>
-                </MenuItems>
-                </MenuItem>
-                <MenuItem Text="Usuń wydarzenie" IconCss="e-icons e-trash" Id="Delete" Hidden="@isEvent" Disabled="@disableState"></MenuItem>
-                <MenuItem Text="Usuń wydarzenie" IconCss="e-icons e-trash" Id="DeleteRecurrenceEvent" Hidden="@isRecurrence" Disabled="@disableState">
-                <MenuItems>
-                <MenuItem Text="Usuń wystąpienie" Id="DeleteOccurrence"></MenuItem>
-                <MenuItem Text="Usuń serie" Id="DeleteSeries"></MenuItem>
-                </MenuItems>
-                </MenuItem>
-                </MenuItems>
-                <MenuEvents TValue="MenuItem" OnOpen="OnOpen" ItemSelected="OnItemSelected" Opened="SetDisableState"></MenuEvents>
-                </SfContextMenu>
-                *@
                 </div>
             </div>
             <div class="right-panel @((this.IsSettingsVisible ? "" : "hide"))">
@@ -783,16 +852,16 @@
                              </SfMultiSelect>
                          </div>
                     }
-                                    @if (showThirdMultiSelect)
-                {
-                <div class="col-row">
-                <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="RequestRef" TValue="Guid[]" TItem="OgolneWnioski" DataSource="@WnioskiData" Placeholder="Rodzaj wniosku" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
-                <MultiSelectFieldSettings Text="Wartosc" Value="Id"></MultiSelectFieldSettings>
-                                <MultiSelectEvents TValue="Guid[]" TItem="OgolneWnioski" ValueChange="@(args => OnMultiSelectRequestChange(args, "RequestId"))"></MultiSelectEvents>
-                </SfMultiSelect>
-                </div>
-                }
-                               <div class="col-row">
+                    @if (showThirdMultiSelect)
+                    {
+                        <div class="col-row">
+                            <SfMultiSelect Mode="@VisualMode.CheckBox" @ref="RequestRef" TValue="Guid[]" TItem="OgolneWnioski" DataSource="@WnioskiData" Placeholder="Rodzaj wniosku" AllowFiltering EnableGroupCheckBox FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+                                 <MultiSelectFieldSettings Text="Wartosc" Value="Id"></MultiSelectFieldSettings>
+                                 <MultiSelectEvents TValue="Guid[]" TItem="OgolneWnioski" ValueChange="@(args => OnMultiSelectRequestChange(args, "RequestId"))"></MultiSelectEvents>
+                             </SfMultiSelect>
+                         </div>
+                    }
+                    <div class="col-row">
                         <SfTextBox ID="events-search" Placeholder='Wprowadz opis' @bind-Value="@SearchValue" OnChange="@OnEventSearch"></SfTextBox>
                     </div>
                 </div>
@@ -835,9 +904,9 @@ else
     }
 
     /*         .schedule-cell-customization.e-schedule .e-month-view .e-work-cells:not(.e-work-days) {
-                                                                    background-color: #2a416f14 !important;
-                                                                }
-                                                         */
+                                                                        background-color: #2a416f14 !important;
+                                                                    }
+                                                             */
     .cell-custom-class {
         background: #42ecf5 !important;
     }

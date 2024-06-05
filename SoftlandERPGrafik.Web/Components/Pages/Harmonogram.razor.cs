@@ -80,6 +80,7 @@
         private string headerDeleteSeries = "Usunięcie wydarzenia/serii";
         private string headerDelete = "Usuń wydarzenie";
         private string headerEditStan = "Masowa edycja stanów";
+        private string headerExport = "Export";
         private string[] cellCustomClass = { "cell-custom-class" };
         private string[] customClass = { "custom-class" };
 
@@ -94,6 +95,8 @@
         private bool VisibilityDeleteSeries { get; set; } = false;
 
         private bool VisibilityChangeStanAll { get; set; } = false;
+
+        private bool VisibilityExport { get; set; } = false;
 
         protected override async Task OnInitializedAsync()
         {
